@@ -21,7 +21,8 @@ export function ResetMemberPasswordForm() {
     setSuccess("")
     setLoading(true)
 
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
     const email = formData.get("email") as string
     const newPassword = formData.get("newPassword") as string
     const confirmPassword = formData.get("confirmPassword") as string
@@ -40,7 +41,7 @@ export function ResetMemberPasswordForm() {
       return
     }
 
-    e.currentTarget.reset()
+    form.reset()
     setSuccess("Member password reset successfully")
     setLoading(false)
   }

@@ -6,7 +6,7 @@ import { StatsCards } from "@/components/stats-cards"
 import { approveOrRejectExpense, markExpensePaid } from "@/actions/expense"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { KeyRound } from "lucide-react"
 
 function formatCategory(category: string): string {
@@ -100,20 +100,20 @@ export default async function AdminPage() {
         <p className="text-gray-600 mt-1">Review and manage expense approvals</p>
       </div>
 
-      {stats && <StatsCards stats={stats} />}
+      {stats && <StatsCards stats={stats} mode="admin" />}
 
       <div className="mt-8 flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-gray-900">Member Accounts</h2>
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline">
-            <Link href="/admin/reset-password" className="inline-flex items-center gap-2">
+          <Link href="/admin/reset-password" className={buttonVariants({ variant: "outline" })}>
+            <span className="inline-flex items-center gap-2">
               <KeyRound className="h-4 w-4" />
               Reset Member Password
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href="/signup">Create Member Account</Link>
-          </Button>
+            </span>
+          </Link>
+          <Link href="/signup" className={buttonVariants()}>
+            Create Member Account
+          </Link>
         </div>
       </div>
 

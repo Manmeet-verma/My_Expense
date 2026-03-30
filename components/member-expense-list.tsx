@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { deleteExpense } from "@/actions/expense"
+import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { ExpenseList } from "@/components/expense-list"
 import { EditExpenseModal } from "@/components/edit-expense-modal"
 import { DeleteExpenseConfirm } from "@/components/delete-expense-confirm"
@@ -43,6 +44,7 @@ export function MemberExpenseList({ expenses, submittedExpenseAmount, totalAmoun
     setIsDeleting(true)
     const result = await deleteExpense(deletingExpenseId)
     if (result?.success) {
+      void broadcastExpenseChange("member-delete")
       router.refresh()
     }
     setIsDeleting(false)
@@ -65,6 +67,7 @@ export function MemberExpenseList({ expenses, submittedExpenseAmount, totalAmoun
           isOpen={Boolean(editingExpense)}
           onClose={() => setEditingExpense(null)}
           onSuccess={() => {
+            void broadcastExpenseChange("member-edit")
             setEditingExpense(null)
             router.refresh()
           }}

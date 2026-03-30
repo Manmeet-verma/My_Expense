@@ -22,7 +22,8 @@ export function ChangePasswordForm() {
     setSuccess("")
     setLoading(true)
 
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
     const currentPassword = formData.get("currentPassword") as string
     const newPassword = formData.get("newPassword") as string
     const confirmPassword = formData.get("confirmPassword") as string
@@ -41,7 +42,7 @@ export function ChangePasswordForm() {
       return
     }
 
-    e.currentTarget.reset()
+    form.reset()
     setSuccess("Password changed successfully")
     setLoading(false)
   }

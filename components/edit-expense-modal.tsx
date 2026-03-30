@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/utils"
+import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { X } from "lucide-react"
 
 interface Expense {
@@ -73,6 +74,7 @@ export function EditExpenseModal({ expense, submittedExpenseAmount, totalAmountU
       setError(result.error)
       setLoading(false)
     } else {
+      void broadcastExpenseChange("member-edit")
       router.refresh()
       onClose()
       onSuccess?.()

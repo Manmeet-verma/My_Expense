@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { TrendingUp, Clock, CheckCircle, XCircle, DollarSign } from "lucide-react"
 
 interface StatsCardsProps {
+  mode?: "member" | "admin"
   stats: {
     total: number
     pending: number
@@ -19,12 +20,12 @@ interface StatsCardsProps {
   }
 }
 
-export function StatsCards({ stats }: StatsCardsProps) {
+export function StatsCards({ stats, mode = "member" }: StatsCardsProps) {
   const totalExpenseAmount = stats.submittedAmount ?? 0
   const submittedExpenseAmount = stats.totalPaidAmount ?? 0
   const remainingExpenseAmount = submittedExpenseAmount - totalExpenseAmount
 
-  const cards = [
+  const memberCards = [
     {
       title: "Total Expense",
       value: formatCurrency(totalExpenseAmount),
@@ -76,8 +77,35 @@ export function StatsCards({ stats }: StatsCardsProps) {
     },
   ]
 
+  const adminCards = [
+    {
+      title: "Total Expense",
+      value: formatCurrency(totalExpenseAmount),
+      icon: TrendingUp,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+    },
+    {
+      title: "Approved Expense",
+      value: formatCurrency(stats.totalApprovedAmount),
+      icon: CheckCircle,
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+    },
+    {
+      title: "Mark Paid Expense",
+      value: formatCurrency(stats.totalPaidAmount ?? 0),
+      icon: DollarSign,
+      color: "text-teal-600",
+      bgColor: "bg-teal-50",
+    },
+  ]
+
+  const cards = mode === "admin" ? adminCards : memberCards
+  const gridClass = mode === "admin" ? "grid grid-cols-1 md:grid-cols-3 gap-4" : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4"
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+    <div className={gridClass}>
       {cards.map((card) => (
         <Card key={card.title}>
           <CardContent className="p-4">

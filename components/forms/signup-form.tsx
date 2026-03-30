@@ -21,7 +21,8 @@ export function SignupForm() {
     setLoading(true)
     setError("")
 
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
     const data = {
       email: formData.get("email") as string,
       name: formData.get("name") as string,
@@ -34,7 +35,7 @@ export function SignupForm() {
       setError(result.error)
       setLoading(false)
     } else {
-      e.currentTarget.reset()
+      form.reset()
       router.refresh()
       setLoading(false)
     }

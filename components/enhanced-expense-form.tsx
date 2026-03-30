@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { formatCurrency } from "@/lib/utils"
+import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { PencilIcon, CheckIcon, XIcon } from "lucide-react"
 
 interface EnhancedExpenseFormProps {
@@ -35,6 +36,7 @@ export function EnhancedExpenseForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [expenseAmount, setExpenseAmount] = useState(0)
+  const [liveTotalAmountUsed, setLiveTotalAmountUsed] = useState(totalAmountUsed)
   const [liveSubmittedAmount, setLiveSubmittedAmount] = useState(submittedExpenseAmount)
   const [editingSubmitted, setEditingSubmitted] = useState(false)
   const [submittedEditValue, setSubmittedEditValue] = useState(submittedExpenseAmount.toString())
@@ -42,16 +44,17 @@ export function EnhancedExpenseForm({
   const [submittedError, setSubmittedError] = useState("")
 
   useEffect(() => {
+    setLiveTotalAmountUsed(totalAmountUsed)
     setLiveSubmittedAmount(submittedExpenseAmount)
     setSubmittedEditValue(submittedExpenseAmount.toString())
-  }, [submittedExpenseAmount])
+  }, [submittedExpenseAmount, totalAmountUsed])
 
   const editValue = Number.parseFloat(submittedEditValue)
   const previewSubmittedAmount = editingSubmitted && !Number.isNaN(editValue)
     ? editValue
     : liveSubmittedAmount
 
-  const remainingExpense = previewSubmittedAmount - totalAmountUsed
+  const remainingExpense = previewSubmittedAmount - liveTotalAmountUsed
 
   async function handleSubmittedExpenseUpdate() {
     setSubmittedLoading(true)
@@ -70,7 +73,7 @@ export function EnhancedExpenseForm({
     setEditingSubmitted(false)
     setSubmittedLoading(false)
   }
-  const totalAfterExpense = totalAmountUsed + expenseAmount
+  const totalAfterExpense = liveTotalAmountUsed + expenseAmount
   const remainingAfterExpense = previewSubmittedAmount - totalAfterExpense
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -78,13 +81,15 @@ export function EnhancedExpenseForm({
     setLoading(true)
     setError("")
 
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
     const data = {
       title: formData.get("title") as string,
       description: formData.get("description") as string || undefined,
       amount: parseFloat(formData.get("amount") as string),
       category: formData.get("category") as "TRAVEL" | "FOOD" | "OFFICE_SUPPLIES",
     }
+    const createdAmount = data.amount
 
     const result = await createExpense(data)
 
@@ -92,8 +97,10 @@ export function EnhancedExpenseForm({
       setError(result.error)
       setLoading(false)
     } else {
-      e.currentTarget.reset()
+      form.reset()
       setExpenseAmount(0)
+      setLiveTotalAmountUsed((prev) => prev + createdAmount)
+      void broadcastExpenseChange("member-create")
       router.refresh()
       if (onSuccess) onSuccess()
       setLoading(false)
@@ -167,7 +174,7 @@ export function EnhancedExpenseForm({
                   </div>
                   {submittedEditValue && !Number.isNaN(editValue) && (
                     <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded">
-                      New Remaining: {formatCurrency(editValue - totalAmountUsed)}
+                      New Remaining: {formatCurrency(editValue - liveTotalAmountUsed)}
                     </div>
                   )}
                 </div>
@@ -180,8 +187,8 @@ export function EnhancedExpenseForm({
             </div>
 
             <div>
-              <p className="text-sm text-blue-700 mb-1">Total Expense</p>
-              <p className="text-lg font-semibold text-blue-900">{formatCurrency(totalAmountUsed)}</p>
+              <p className="text-sm text-blue-700 mb-1">Total Expense (before)</p>
+              <p className="text-lg font-semibold text-blue-900">{formatCurrency(liveTotalAmountUsed)}</p>
             </div>
             <div>
               <p className="text-sm text-blue-700 mb-1">Remaining</p>
@@ -264,7 +271,7 @@ export function EnhancedExpenseForm({
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Expense (before):</span>
-                  <span className="font-semibold">{formatCurrency(totalAmountUsed)}</span>
+                  <span className="font-semibold">{formatCurrency(liveTotalAmountUsed)}</span>
                 </div>
                 <div className="flex justify-between border-t pt-2">
                   <span className="text-gray-600">+ New Expense:</span>
