@@ -4,7 +4,15 @@ import { compare, hash } from "bcryptjs"
 import { prisma } from "./prisma"
 import { Role } from "@prisma/client"
 
+const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET
+
+if (!authSecret) {
+  throw new Error("AUTH_SECRET (or NEXTAUTH_SECRET) is required")
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: authSecret,
+  trustHost: true,
   providers: [
     Credentials({
       name: "credentials",

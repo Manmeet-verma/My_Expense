@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 enum Role {
@@ -15,6 +15,7 @@ enum ExpenseStatus {
   PENDING
   APPROVED
   REJECTED
+  PAID
 }
 
 enum ExpenseCategory {
@@ -29,14 +30,15 @@ enum ExpenseCategory {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  name      String?
-  password  String
-  role      Role      @default(MEMBER)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  expenses  Expense[]
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  password     String
+  role         Role      @default(MEMBER)
+  totalBudget  Float     @default(5000) // Default budget for members
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  expenses     Expense[]
 }
 
 model Expense {

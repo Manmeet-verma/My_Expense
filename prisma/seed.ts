@@ -1,26 +1,27 @@
+import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import pg from 'pg'
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 import { hash } from 'bcryptjs'
 
-const { Pool } = pg
+const connectionString = process.env.DATABASE_URL
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is not set')
+}
+
+const adapter = new PrismaBetterSqlite3({ url: connectionString })
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
-  const connectionString = process.env.DATABASE_URL
-  
-  if (!connectionString) {
-    throw new Error('DATABASE_URL environment variable is not set')
-  }
-
-  const pool = new Pool({ connectionString })
-  const adapter = new PrismaPg(pool)
-  const prisma = new PrismaClient({ adapter })
-
   // Create admin user
   const adminPassword = await hash('admin123', 12)
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'admin@example.com' },
-    update: {},
+    update: {
+      name: 'Admin User',
+      password: adminPassword,
+      role: 'ADMIN',
+    },
     create: {
       email: 'admin@example.com',
       name: 'Admin User',
@@ -29,22 +30,26 @@ async function main() {
     },
   })
 
-  // Create member user
+  // Create member user with budget
   const memberPassword = await hash('member123', 12)
   const member = await prisma.user.upsert({
     where: { email: 'member@example.com' },
-    update: {},
+    update: {
+      name: 'John Member',
+      password: memberPassword,
+      role: 'MEMBER',
+      totalBudget: 5000,
+    },
     create: {
       email: 'member@example.com',
       name: 'John Member',
       password: memberPassword,
       role: 'MEMBER',
+      totalBudget: 5000, // Monthly budget allocation
     },
   })
 
   // Create sample expenses
-  const categories = ['FOOD', 'TRAVEL', 'TRANSPORTATION', 'OTHER'] as const
-  
   await prisma.expense.createMany({
     data: [
       {
@@ -72,7 +77,6 @@ async function main() {
         createdById: member.id,
       },
     ],
-    skipDuplicates: true,
   })
 
   console.log('Seed completed!')

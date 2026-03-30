@@ -47,6 +47,7 @@ const statusVariants: Record<ExpenseStatus, "default" | "success" | "destructive
   PENDING: "warning",
   APPROVED: "success",
   REJECTED: "destructive",
+  PAID: "default",
 }
 
 export function ExpenseList({ expenses, isAdmin, onEdit, onDelete, onApprove, onReject }: ExpenseListProps) {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   title: "Expense Manager",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col bg-gray-50">{children}</body>
+      <body className="min-h-full flex flex-col bg-gray-50">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

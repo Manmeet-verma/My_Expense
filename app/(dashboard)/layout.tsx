@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { Navigation } from "@/components/navigation"
+import { LiveDataSync } from "@/components/live-data-sync"
 
 export default async function DashboardLayout({
   children,
@@ -17,6 +18,7 @@ export default async function DashboardLayout({
     <>
       <Navigation user={session.user} />
       <main className="flex-1">
+        <LiveDataSync intervalMs={5000} />
         {children}
       </main>
     </>

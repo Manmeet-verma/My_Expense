@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -17,10 +17,12 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@prisma/adapter-better-sqlite3": "^7.6.0",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "@supabase/supabase-js": "^2.100.1",
     "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.8.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.3.1",

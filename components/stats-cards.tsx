@@ -10,18 +10,41 @@ interface StatsCardsProps {
     pending: number
     approved: number
     rejected: number
+    paid?: number
     totalApprovedAmount: number
+    totalPaidAmount?: number
+    totalBudget?: number
+    submittedAmount?: number
+    remainingBudget?: number
   }
 }
 
 export function StatsCards({ stats }: StatsCardsProps) {
+  const totalExpenseAmount = stats.submittedAmount ?? 0
+  const submittedExpenseAmount = stats.totalPaidAmount ?? 0
+  const remainingExpenseAmount = submittedExpenseAmount - totalExpenseAmount
+
   const cards = [
     {
-      title: "Total Expenses",
-      value: stats.total,
+      title: "Total Expense",
+      value: formatCurrency(totalExpenseAmount),
       icon: TrendingUp,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
+    },
+    {
+      title: "Submitted Expense",
+      value: formatCurrency(submittedExpenseAmount),
+      icon: DollarSign,
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-50",
+    },
+    {
+      title: "Remaining",
+      value: formatCurrency(remainingExpenseAmount),
+      icon: DollarSign,
+      color: remainingExpenseAmount >= 0 ? "text-green-600" : "text-red-600",
+      bgColor: remainingExpenseAmount >= 0 ? "bg-green-50" : "bg-red-50",
     },
     {
       title: "Pending",
@@ -45,16 +68,16 @@ export function StatsCards({ stats }: StatsCardsProps) {
       bgColor: "bg-red-50",
     },
     {
-      title: "Total Approved",
-      value: formatCurrency(stats.totalApprovedAmount),
-      icon: DollarSign,
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
+      title: "Paid",
+      value: stats.paid ?? 0,
+      icon: CheckCircle,
+      color: "text-teal-600",
+      bgColor: "bg-teal-50",
     },
   ]
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
       {cards.map((card) => (
         <Card key={card.title}>
           <CardContent className="p-4">
