@@ -4,6 +4,17 @@ import { deleteMember, getMembers } from "@/actions/auth"
 import { Button } from "@/components/ui/button"
 import { formatCurrency, formatDate } from "@/lib/utils"
 
+type MemberRow = {
+  id: string
+  name: string | null
+  email: string
+  totalBudget: number
+  createdAt: Date
+  _count: {
+    expenses: number
+  }
+}
+
 export default async function AdminMembersPage() {
   const session = await auth()
 
@@ -57,7 +68,7 @@ export default async function AdminMembersPage() {
                   </td>
                 </tr>
               ) : (
-                members.map((member) => (
+                members.map((member: MemberRow) => (
                   <tr key={member.id} className="border-t border-gray-100">
                     <td className="px-4 py-3 font-medium text-gray-900">{member.name || "-"}</td>
                     <td className="px-4 py-3 text-gray-700">{member.email}</td>
@@ -83,7 +94,7 @@ export default async function AdminMembersPage() {
           {members.length === 0 ? (
             <div className="px-4 py-8 text-center text-gray-500">No members found</div>
           ) : (
-            members.map((member) => (
+            members.map((member: MemberRow) => (
               <div key={member.id} className="p-4 space-y-3">
                 <div>
                   <p className="font-semibold text-gray-900">{member.name || "-"}</p>
