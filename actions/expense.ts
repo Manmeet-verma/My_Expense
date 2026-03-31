@@ -4,7 +4,6 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
-import { ExpenseCategory, ExpenseStatus } from "@prisma/client"
 
 const expenseSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -47,7 +46,7 @@ export async function createExpense(data: z.infer<typeof expenseSchema>) {
       title,
       description,
       amount,
-      category: category as ExpenseCategory,
+      category,
       createdById: session.user.id,
     },
   })
@@ -136,7 +135,7 @@ export async function updateExpense(id: string, data: z.infer<typeof expenseSche
       title,
       description,
       amount,
-      category: category as ExpenseCategory,
+      category,
     },
   })
 
@@ -217,7 +216,7 @@ export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema
   await prisma.expense.update({
     where: { id },
     data: {
-      status: status as ExpenseStatus,
+      status,
       adminRemark,
     },
   })
@@ -249,14 +248,14 @@ export async function markExpensePaid(data: z.infer<typeof paymentSchema>) {
     return { error: "Expense not found" }
   }
 
-  if (expense.status !== ExpenseStatus.APPROVED) {
+  if (expense.status !== "APPROVED") {
     return { error: "Only approved expenses can be marked as paid" }
   }
 
   await prisma.expense.update({
     where: { id },
     data: {
-      status: ExpenseStatus.PAID,
+      status: "PAID",
     },
   })
 

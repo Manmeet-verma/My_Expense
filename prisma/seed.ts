@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+import { PrismaPg } from '@prisma/adapter-pg'
+import pg from 'pg'
 import { hash } from 'bcryptjs'
 
 const connectionString = process.env.DATABASE_URL
@@ -9,7 +10,8 @@ if (!connectionString) {
   throw new Error('DATABASE_URL environment variable is not set')
 }
 
-const adapter = new PrismaBetterSqlite3({ url: connectionString })
+const pool = new pg.Pool({ connectionString })
+const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
@@ -77,17 +79,20 @@ async function main() {
         createdById: member.id,
       },
     ],
+    skipDuplicates: true,
   })
 
   console.log('Seed completed!')
   console.log('Admin user: admin@example.com / admin123')
   console.log('Member user: member@example.com / member123')
 
-  await prisma.$disconnect()
 }
 
 main()
   .catch((e) => {
     console.error(e)
     process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
   })

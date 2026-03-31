@@ -3,19 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 enum Role {
   ADMIN
   MEMBER
-}
-
-enum ExpenseStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  PAID
 }
 
 enum ExpenseCategory {
@@ -29,28 +22,35 @@ enum ExpenseCategory {
   OTHER
 }
 
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
+}
+
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
   name         String?
   password     String
   role         Role      @default(MEMBER)
-  totalBudget  Float     @default(5000) // Default budget for members
+  totalBudget  Float     @default(5000)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   expenses     Expense[]
 }
 
 model Expense {
-  id           String         @id @default(cuid())
+  id           String   @id @default(cuid())
   title        String
   description  String?
   amount       Float
   category     ExpenseCategory
-  status       ExpenseStatus  @default(PENDING)
+  status       ExpenseStatus   @default(PENDING)
   adminRemark  String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   createdById  String
-  createdBy    User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy    User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
 }
