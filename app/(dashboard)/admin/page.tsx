@@ -41,7 +41,7 @@ export default async function AdminPage() {
   ])
 
   const memberExpenseSummary = expenses.reduce<Record<string, { submittedByAdmin: number; totalUsed: number }>>(
-    (acc, expense) => {
+    (acc: Record<string, { submittedByAdmin: number; totalUsed: number }>, expense) => {
       const memberId = expense.createdById
       if (!acc[memberId]) {
         acc[memberId] = {
