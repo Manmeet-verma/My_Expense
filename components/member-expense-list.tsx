@@ -7,15 +7,7 @@ import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { ExpenseList } from "@/components/expense-list"
 import { EditExpenseModal } from "@/components/edit-expense-modal"
 import { DeleteExpenseConfirm } from "@/components/delete-expense-confirm"
-
-const ExpenseStatus = {
-  PENDING: "PENDING",
-  APPROVED: "APPROVED",
-  REJECTED: "REJECTED",
-  PAID: "PAID",
-} as const
-
-type ExpenseStatus = (typeof ExpenseStatus)[keyof typeof ExpenseStatus]
+import { ExpenseStatus } from "@/lib/types"
 
 interface Expense {
   id: string
