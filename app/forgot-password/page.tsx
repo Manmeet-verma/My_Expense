@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { adminForgotPassword } from "@/actions/auth"
+import { forgotPassword } from "@/actions/auth"
 import { Eye, EyeOff } from "lucide-react"
 
 export default function ForgotPasswordPage() {
@@ -23,9 +23,10 @@ export default function ForgotPasswordPage() {
 
     const formData = new FormData(e.currentTarget)
     const email = formData.get("email") as string
+    const newEmail = formData.get("newEmail") as string
     const newPassword = formData.get("newPassword") as string
 
-    const result = await adminForgotPassword({ email, newPassword })
+    const result = await forgotPassword({ email, newEmail, newPassword })
 
     if (result?.error) {
       setError(result.error)
@@ -41,8 +42,8 @@ export default function ForgotPasswordPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-green-600">Password Reset Successful</CardTitle>
-            <CardDescription>Your password has been changed. Please log in with your new password.</CardDescription>
+            <CardTitle className="text-2xl font-bold text-green-600">Update Successful</CardTitle>
+            <CardDescription>Your changes have been saved. Please log in with your new credentials.</CardDescription>
           </CardHeader>
           <CardFooter>
             <Button onClick={() => router.push("/login")} className="w-full">
@@ -58,8 +59,8 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Reset Admin Password</CardTitle>
-          <CardDescription>Only admins can reset their password here. Members should contact their admin.</CardDescription>
+          <CardTitle className="text-2xl font-bold">Reset Password & Email</CardTitle>
+          <CardDescription>Enter your current email and update your credentials.</CardDescription>
         </CardHeader>
         <form onSubmit={onSubmit}>
           <CardContent className="space-y-4">
@@ -69,13 +70,22 @@ export default function ForgotPasswordPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Admin Email</Label>
+              <Label htmlFor="email">Current Email</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="admin@example.com"
+                placeholder="you@example.com"
                 required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newEmail">New Email (optional)</Label>
+              <Input
+                id="newEmail"
+                name="newEmail"
+                type="email"
+                placeholder="newemail@example.com"
               />
             </div>
             <div className="space-y-2">
@@ -102,7 +112,7 @@ export default function ForgotPasswordPage() {
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Resetting..." : "Reset Password"}
+              {loading ? "Updating..." : "Update"}
             </Button>
             <p className="text-sm text-center text-gray-600">
               <a href="/login" className="text-blue-600 hover:underline">Back to Login</a>

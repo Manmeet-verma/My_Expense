@@ -66,6 +66,12 @@ const adminForgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
   newPassword: z.string().min(6, "New password must be at least 6 characters"),
 })
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  newEmail: z.string().email("Invalid email address").optional(),
+  newPassword: z.string().min(6, "New password must be at least 6 characters"),
+})
 const verifyMemberPasswordSchema = z.object({
   memberId: z.string().min(1, "Member ID is required"),
 })
@@ -482,6 +488,52 @@ export async function adminForgotPassword(data: z.infer<typeof adminForgotPasswo
   })
 
   revalidatePath("/dashboard")
+
+  return { success: true }
+}
+
+export async function forgotPassword(data: z.infer<typeof forgotPasswordSchema>) {
+  const result = forgotPasswordSchema.safeParse(data)
+
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { email, newEmail, newPassword } = result.data
+  const normalizedEmail = email.trim().toLowerCase()
+
+  const user = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+    select: { id: true, role: true },
+  })
+
+  if (!user) {
+    return { error: "User not found" }
+  }
+
+  const updateData: { password: string; email?: string } = {
+    password: await hashPassword(newPassword),
+  }
+
+  if (newEmail && newEmail.trim()) {
+    const normalizedNewEmail = newEmail.trim().toLowerCase()
+    const existingEmail = await prisma.user.findUnique({
+      where: { email: normalizedNewEmail },
+    })
+
+    if (existingEmail) {
+      return { error: "New email already in use" }
+    }
+
+    updateData.email = normalizedNewEmail
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: updateData,
+  })
+
+  revalidatePath("/login")
 
   return { success: true }
 }
