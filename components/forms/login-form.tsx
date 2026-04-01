@@ -52,7 +52,13 @@ export function LoginForm() {
     })
 
     if (result?.error) {
-      setError("Invalid email or password")
+      if (result.error.includes("CredentialsSignin")) {
+        setError("Invalid email or password")
+      } else if (result.error.toLowerCase().includes("csrf")) {
+        setError("Session expired. Refresh the page and try again.")
+      } else {
+        setError("Login failed due to a server/auth configuration error.")
+      }
       setLoading(false)
     } else {
       router.push("/dashboard")

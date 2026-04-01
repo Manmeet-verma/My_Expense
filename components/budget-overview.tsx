@@ -47,7 +47,7 @@ export function BudgetOverview({ memberName, totalBudget, submittedAmount }: Bud
   return (
     <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-blue-900">Budget Overview</CardTitle>
+        <CardTitle className="text-blue-900">Opening Balance</CardTitle>
         {!editingBudget && (
           <button
             onClick={() => setEditingBudget(true)}

@@ -136,6 +136,9 @@ export async function updateExpense(id: string, data: z.infer<typeof expenseSche
       description,
       amount,
       category,
+      editCount: {
+        increment: 1,
+      },
     },
   })
 

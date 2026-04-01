@@ -1,3 +1,5 @@
+require('dotenv/config');
+
 const { PrismaClient } = require('@prisma/client');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const pg = require('pg');
@@ -28,14 +30,6 @@ async function test() {
     console.log(`✓ Expenses in Supabase: ${expenses.length}`);
     if (expenses.length > 0) {
       console.log(`  Sample: ${expenses[0].title}`);
-    }
-    
-    // Test Budget table
-    try {
-      const budgets = await prisma.budget.findMany();
-      console.log(`✓ Budgets in Supabase: ${budgets.length}`);
-    } catch (err) {
-      console.log(`ℹ Budgets table: Not yet queried (may not have records)`);
     }
     
     console.log('\n' + '='.repeat(60));

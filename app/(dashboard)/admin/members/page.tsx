@@ -9,6 +9,7 @@ type MemberRow = {
   name: string | null
   email: string
   totalBudget: number
+  totalEdits: number
   createdAt: Date
   _count: {
     expenses: number
@@ -56,6 +57,7 @@ export default async function AdminMembersPage() {
                 <th className="px-4 py-3 font-semibold">Email</th>
                 <th className="px-4 py-3 font-semibold">Budget</th>
                 <th className="px-4 py-3 font-semibold">Expenses</th>
+                <th className="px-4 py-3 font-semibold">Edits</th>
                 <th className="px-4 py-3 font-semibold">Joined</th>
                 <th className="px-4 py-3 font-semibold">Actions</th>
               </tr>
@@ -63,7 +65,7 @@ export default async function AdminMembersPage() {
             <tbody>
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
+                  <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
                     No members found
                   </td>
                 </tr>
@@ -74,6 +76,7 @@ export default async function AdminMembersPage() {
                     <td className="px-4 py-3 text-gray-700">{member.email}</td>
                     <td className="px-4 py-3 text-gray-900">{formatCurrency(member.totalBudget)}</td>
                     <td className="px-4 py-3 text-gray-700">{member._count.expenses}</td>
+                    <td className="px-4 py-3 text-gray-700">{member.totalEdits}</td>
                     <td className="px-4 py-3 text-gray-700">{formatDate(member.createdAt)}</td>
                     <td className="px-4 py-3">
                       <form action={deleteMemberAction}>
@@ -108,6 +111,10 @@ export default async function AdminMembersPage() {
                   <div>
                     <p className="text-gray-500">Expenses</p>
                     <p className="font-medium text-gray-900">{member._count.expenses}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Edits</p>
+                    <p className="font-medium text-gray-900">{member.totalEdits}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Joined</p>

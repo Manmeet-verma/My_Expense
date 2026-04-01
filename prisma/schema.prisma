@@ -46,6 +46,7 @@ model Expense {
   title        String
   description  String?
   amount       Float
+  editCount    Int      @default(0)
   category     ExpenseCategory
   status       ExpenseStatus   @default(PENDING)
   adminRemark  String?

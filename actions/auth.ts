@@ -312,7 +312,7 @@ export async function getMembers() {
     return []
   }
 
-  return prisma.user.findMany({
+  const members = await prisma.user.findMany({
     where: { role: "MEMBER" },
     select: {
       id: true,
@@ -320,6 +320,11 @@ export async function getMembers() {
       email: true,
       totalBudget: true,
       createdAt: true,
+      expenses: {
+        select: {
+          editCount: true,
+        },
+      },
       _count: {
         select: {
           expenses: true,
@@ -328,6 +333,16 @@ export async function getMembers() {
     },
     orderBy: { createdAt: "desc" },
   })
+
+  return members.map((member) => ({
+    id: member.id,
+    name: member.name,
+    email: member.email,
+    totalBudget: member.totalBudget,
+    createdAt: member.createdAt,
+    _count: member._count,
+    totalEdits: member.expenses.reduce((sum, expense) => sum + expense.editCount, 0),
+  }))
 }
 
 export async function getAdmins() {

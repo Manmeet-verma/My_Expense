@@ -11,6 +11,12 @@ function getSupabaseBrowserClient() {
   if (typeof window === "undefined") return null
   if (browserClient !== undefined) return browserClient
 
+  const host = window.location.hostname
+  if (host === "localhost" || host === "127.0.0.1") {
+    browserClient = null
+    return browserClient
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
