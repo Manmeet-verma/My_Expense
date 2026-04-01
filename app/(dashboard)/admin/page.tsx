@@ -4,10 +4,12 @@ import { redirect } from "next/navigation"
 import { getAllExpenses, getExpenseStats } from "@/actions/expense"
 import { StatsCards } from "@/components/stats-cards"
 import { approveOrRejectExpense, markExpensePaid } from "@/actions/expense"
+import { getAdmins } from "@/actions/auth"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { KeyRound } from "lucide-react"
+import { AdminSection } from "@/components/forms/admin-section"
 
 type Expense = Awaited<ReturnType<typeof getAllExpenses>>[number]
 
@@ -37,9 +39,10 @@ export default async function AdminPage() {
     redirect("/dashboard")
   }
 
-  const [expenses, stats] = await Promise.all([
+  const [expenses, stats, admins] = await Promise.all([
     getAllExpenses(),
     getExpenseStats(),
+    getAdmins(),
   ])
 
   const memberExpenseSummary = expenses.reduce<Record<string, { submittedByAdmin: number; totalUsed: number }>>(
@@ -103,6 +106,35 @@ export default async function AdminPage() {
       </div>
 
       {stats && <StatsCards stats={stats} mode="admin" />}
+
+      <div className="mt-8">
+        <AdminSection />
+
+        {admins.length > 0 && (
+          <div className="mt-4 rounded-lg border border-gray-200 bg-white overflow-hidden">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 text-left text-gray-600">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Name</th>
+                  <th className="px-4 py-3 font-semibold">Email</th>
+                  <th className="px-4 py-3 font-semibold">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {admins.map((admin) => (
+                  <tr key={admin.id} className="border-t border-gray-100">
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {admin.name || "N/A"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">{admin.email}</td>
+                    <td className="px-4 py-3 text-gray-700">{formatDate(admin.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       <div className="mt-8 flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-gray-900">Member Accounts</h2>

@@ -34,6 +34,12 @@ const signupSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 })
 
+const createAdminSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+})
+
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(6, "Current password is required"),
   newPassword: z.string().min(6, "New password must be at least 6 characters"),
@@ -85,6 +91,46 @@ export async function signup(data: z.infer<typeof signupSchema>) {
       name,
       password: hashedPassword,
       role: "MEMBER",
+    },
+  })
+
+  revalidatePath("/login")
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function createAdmin(data: z.infer<typeof createAdminSchema>) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can create admin accounts" }
+  }
+
+  const result = createAdminSchema.safeParse(data)
+
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { email, name, password } = result.data
+  const normalizedEmail = email.trim().toLowerCase()
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+  })
+
+  if (existingUser) {
+    return { error: "Email already registered" }
+  }
+
+  const hashedPassword = await hashPassword(password)
+
+  await prisma.user.create({
+    data: {
+      email: normalizedEmail,
+      name,
+      password: hashedPassword,
+      role: "ADMIN",
     },
   })
 
@@ -203,6 +249,25 @@ export async function getMembers() {
       },
     },
     orderBy: { createdAt: "desc" },
+  })
+}
+
+export async function getAdmins() {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return []
+  }
+
+  return prisma.user.findMany({
+    where: { role: "ADMIN" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "asc" },
   })
 }
 
