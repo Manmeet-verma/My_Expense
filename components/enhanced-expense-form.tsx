@@ -25,6 +25,7 @@ const CATEGORIES = [
   { value: "TRAVEL", label: "Travel" },
   { value: "FOOD", label: "Food & Dining" },
   { value: "OFFICE_SUPPLIES", label: "Office" },
+  { value: "OTHER", label: "Other" },
 ] as const
 
 export function EnhancedExpenseForm({ 
@@ -87,7 +88,7 @@ export function EnhancedExpenseForm({
       title: formData.get("title") as string,
       description: formData.get("description") as string || undefined,
       amount: parseFloat(formData.get("amount") as string),
-      category: formData.get("category") as "TRAVEL" | "FOOD" | "OFFICE_SUPPLIES",
+      category: formData.get("category") as "TRAVEL" | "FOOD" | "OFFICE_SUPPLIES" | "OTHER",
     }
     const createdAmount = data.amount
 
