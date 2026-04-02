@@ -25,19 +25,21 @@ export function Navigation({ user }: NavProps) {
     {
       href: "/dashboard",
       label: "Dashboard",
-      icon: LayoutDashboard,
       visible: true,
+    },
+    {
+      href: "/dashboard/expense-entry",
+      label: "Expense Entry",
+      visible: !isAdmin,
     },
     {
       href: "/admin",
       label: "Admin",
-      icon: Users,
       visible: isAdmin,
     },
     {
       href: "/admin/members",
       label: "Members",
-      icon: Users,
       visible: isAdmin,
     },
   ]
@@ -57,13 +59,12 @@ export function Navigation({ user }: NavProps) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "text-sm font-medium transition-colors",
                     pathname === item.href
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-600 hover:bg-gray-50"
+                      ? "text-red-600"
+                      : "text-gray-600 hover:text-red-600"
                   )}
                 >
-                  <item.icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               ))}
@@ -109,13 +110,12 @@ export function Navigation({ user }: NavProps) {
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                     pathname === item.href
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-600 hover:bg-gray-50"
+                      ? "text-red-600"
+                      : "text-gray-600"
                   )}
                 >
-                  <item.icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               ))}

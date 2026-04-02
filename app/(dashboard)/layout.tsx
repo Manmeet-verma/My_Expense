@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { LiveDataSync } from "@/components/live-data-sync"
+import { MemberSidebar } from "@/components/member-sidebar"
 
 export default async function DashboardLayout({
   children,
@@ -14,13 +15,18 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
+  const isAdmin = session.user.role === "ADMIN"
+
   return (
     <>
       <Navigation user={session.user} />
-      <main className="flex-1">
-        <LiveDataSync />
-        {children}
-      </main>
+      <div className="flex">
+        {!isAdmin && <MemberSidebar />}
+        <main className="flex-1">
+          <LiveDataSync />
+          {children}
+        </main>
+      </div>
     </>
   )
 }

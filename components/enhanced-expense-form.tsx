@@ -109,48 +109,47 @@ export function EnhancedExpenseForm({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Budget Overview Card */}
       <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-blue-900">Opening Balance</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between py-2">
+          <CardTitle className="text-blue-900 text-sm">Opening Balance</CardTitle>
           {!editingBudget && (
             <button
               onClick={() => {
                 setBudgetEditValue(liveBudget.toString())
                 setEditingBudget(true)
               }}
-              className="p-2 text-blue-600 hover:bg-blue-200 rounded-lg transition"
+              className="p-1 text-blue-600 hover:bg-blue-200 rounded transition"
               title="Edit budget"
             >
-              <PencilIcon className="w-4 h-4" />
+              <PencilIcon className="w-3 h-3" />
             </button>
           )}
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-2 py-2">
           {budgetError && (
-            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">
+            <div className="bg-red-50 text-red-600 text-xs p-2 rounded">
               {budgetError}
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-sm text-blue-700 mb-1">Member Name</p>
-              <p className="text-lg font-semibold text-blue-900">{memberName}</p>
+              <p className="text-xs text-blue-700">Member</p>
+              <p className="text-sm font-semibold text-blue-900">{memberName}</p>
             </div>
-            {/* Editable Budget */}
             <div>
               {editingBudget ? (
-                <div className="space-y-2">
-                  <p className="text-sm text-blue-700">Budget</p>
-                  <div className="flex gap-2">
+                <div className="space-y-1">
+                  <p className="text-xs text-blue-700">Budget</p>
+                  <div className="flex gap-1">
                     <Input
                       type="number"
                       value={budgetEditValue}
                       onChange={(e) => setBudgetEditValue(e.target.value)}
                       step="0.01"
                       min="0"
-                      className="p-1 h-8 text-sm"
+                      className="p-1 h-6 text-xs"
                     />
                     <button
                       onClick={handleBudgetUpdate}
@@ -158,7 +157,7 @@ export function EnhancedExpenseForm({
                       className="p-1 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400"
                       title="Save"
                     >
-                      <CheckIcon className="w-4 h-4" />
+                      <CheckIcon className="w-3 h-3" />
                     </button>
                     <button
                       onClick={() => {
@@ -170,21 +169,21 @@ export function EnhancedExpenseForm({
                       className="p-1 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:bg-gray-400"
                       title="Cancel"
                     >
-                      <XIcon className="w-4 h-4" />
+                      <XIcon className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
               ) : (
                 <div>
-                  <p className="text-sm text-blue-700 mb-1">Budget</p>
-                  <p className="text-lg font-semibold text-blue-900">{formatCurrency(liveBudget)}</p>
+                  <p className="text-xs text-blue-700">Budget</p>
+                  <p className="text-sm font-semibold text-blue-900">{formatCurrency(liveBudget)}</p>
                 </div>
               )}
             </div>
 
             <div>
-              <p className="text-sm text-blue-700 mb-1">Total Expense</p>
-              <p className="text-lg font-semibold text-blue-900">{formatCurrency(liveTotalAmountUsed)}</p>
+              <p className="text-xs text-blue-700">Total Expense</p>
+              <p className="text-sm font-semibold text-blue-900">{formatCurrency(liveTotalAmountUsed)}</p>
             </div>
           </div>
         </CardContent>
@@ -192,35 +191,37 @@ export function EnhancedExpenseForm({
 
       {/* Expense Form Card */}
       <Card>
-        <CardHeader>
-          <CardTitle>Add New Expense</CardTitle>
+        <CardHeader className="py-2">
+          <CardTitle className="text-sm">Add Expense</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-3">
             {error && (
-              <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">
+              <div className="bg-red-50 text-red-600 text-xs p-2 rounded">
                 {error}
               </div>
             )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="title" className="text-xs">Title *</Label>
               <Input
                 id="title"
                 name="title"
-                placeholder="Expense title"
+                placeholder="Title"
                 required
+                className="h-7 text-xs"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
+            <div className="space-y-1">
+              <Label htmlFor="category" className="text-xs">Category *</Label>
               <Select 
                 id="category" 
                 name="category" 
                 defaultValue="TRAVEL"
                 required
+                className="h-7 text-xs"
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat.value} value={cat.value}>
@@ -231,18 +232,19 @@ export function EnhancedExpenseForm({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+          <div className="space-y-1">
+            <Label htmlFor="description" className="text-xs">Description</Label>
             <Textarea
               id="description"
               name="description"
-              placeholder="Add details about this expense..."
-              rows={3}
+              placeholder="Details..."
+              rows={2}
+              className="text-xs"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="amount">Expense Amount (INR) *</Label>
+          <div className="space-y-1">
+            <Label htmlFor="amount" className="text-xs">Amount (INR) *</Label>
             <Input
               id="amount"
               name="amount"
@@ -252,35 +254,25 @@ export function EnhancedExpenseForm({
               placeholder="₹0.00"
               onChange={(e) => setExpenseAmount(parseFloat(e.target.value) || 0)}
               required
+              className="h-7 text-xs"
             />
           </div>
 
           {/* Real-time calculation */}
-          <Card className="bg-gray-50 border-0">
-            <CardContent className="pt-4">
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Total Expense (before):</span>
-                  <span className="font-semibold">{formatCurrency(liveTotalAmountUsed)}</span>
-                </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-gray-600">+ New Expense:</span>
-                  <span className="font-semibold text-orange-600">{formatCurrency(expenseAmount)}</span>
-                </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-gray-600">= Total (after):</span>
-                  <span className="font-semibold">{formatCurrency(liveTotalAmountUsed + expenseAmount)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-gray-50 rounded p-2">
+            <div className="flex justify-between text-xs">
+              <span className="text-gray-600">Total:</span>
+              <span className="font-semibold">{formatCurrency(liveTotalAmountUsed + expenseAmount)}</span>
+            </div>
+          </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full h-7 text-xs" disabled={loading}>
             {loading ? "Saving..." : "Create Expense"}
           </Button>
-        </form>
-      </CardContent>
-    </Card>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
-    }
+}
+
