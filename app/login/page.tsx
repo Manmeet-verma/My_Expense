@@ -24,7 +24,7 @@ function getLoginErrorMessage(error?: string) {
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const headerList = headers()
+  const headerList = await headers()
   const host = headerList.get("host")
   const protocol = headerList.get("x-forwarded-proto") ?? "http"
   const baseUrl = host ? `${protocol}://${host}` : process.env.NEXTAUTH_URL ?? "http://localhost:3000"
