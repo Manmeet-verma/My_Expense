@@ -4,7 +4,13 @@ import { getMembers } from "@/actions/auth"
 import { ResetMemberPasswordForm } from "@/components/forms/reset-member-password-form"
 
 export default async function AdminResetPasswordPage() {
-  const session = await auth()
+  let session = null
+  try {
+    session = await auth()
+  } catch (error) {
+    console.error("Reset password page auth error:", error)
+    redirect("/login")
+  }
 
   if (!session?.user) {
     redirect("/login")
@@ -14,7 +20,13 @@ export default async function AdminResetPasswordPage() {
     redirect("/dashboard")
   }
 
-  const members = await getMembers()
+  let members = []
+  try {
+    members = await getMembers() || []
+  } catch (error) {
+    console.error("Get members error:", error)
+    members = []
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

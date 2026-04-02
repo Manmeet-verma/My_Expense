@@ -29,7 +29,13 @@ function getStatusVariant(status: string): "warning" | "success" | "destructive"
 }
 
 export default async function AdminPage() {
-  const session = await auth()
+  let session = null
+  try {
+    session = await auth()
+  } catch (error) {
+    console.error("Admin page auth error:", error)
+    redirect("/login")
+  }
 
   if (!session?.user) {
     redirect("/login")
@@ -39,11 +45,22 @@ export default async function AdminPage() {
     redirect("/dashboard")
   }
 
-  const [expenses, stats, admins] = await Promise.all([
-    getAllExpenses(),
-    getExpenseStats(),
-    getAdmins(),
-  ])
+  let expenses: Expense[] = []
+  let stats = null
+  let admins: Awaited<ReturnType<typeof getAdmins>> = []
+
+  try {
+    const results = await Promise.all([
+      getAllExpenses(),
+      getExpenseStats(),
+      getAdmins(),
+    ])
+    expenses = results[0] as Expense[]
+    stats = results[1]
+    admins = results[2]
+  } catch (error) {
+    console.error("Admin page data error:", error)
+  }
 
   async function approveAction(formData: FormData) {
     "use server"
