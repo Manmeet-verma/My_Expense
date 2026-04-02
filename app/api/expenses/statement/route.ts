@@ -1,0 +1,48 @@
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth"
+
+export async function GET(request: NextRequest) {
+  const session = await auth()
+
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const searchParams = request.nextUrl.searchParams
+  const fromDate = searchParams.get("fromDate")
+  const toDate = searchParams.get("toDate")
+  const status = searchParams.get("status")
+  const userId = searchParams.get("userId")
+
+  if (!fromDate || !toDate || !status) {
+    return NextResponse.json({ error: "Missing required parameters" }, { status: 400 })
+  }
+
+  try {
+    const fromDateTime = new Date(fromDate)
+    fromDateTime.setHours(0, 0, 0, 0)
+
+    const toDateTime = new Date(toDate)
+    toDateTime.setHours(23, 59, 59, 999)
+
+    const expenses = await prisma.expense.findMany({
+      where: {
+        createdAt: {
+          gte: fromDateTime,
+          lte: toDateTime,
+        },
+        status: status as "APPROVED" | "REJECTED" | "PENDING" | "PAID",
+        createdById: userId || session.user.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    })
+
+    return NextResponse.json(expenses)
+  } catch (error) {
+    console.error("Failed to fetch expenses:", error)
+    return NextResponse.json({ error: "Failed to fetch expenses" }, { status: 500 })
+  }
+}
