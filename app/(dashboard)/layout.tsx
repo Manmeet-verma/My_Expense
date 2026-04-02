@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { LiveDataSync } from "@/components/live-data-sync"
 import { MemberSidebar } from "@/components/member-sidebar"
+import { AdminSidebar } from "@/components/admin-sidebar"
 
 export default async function DashboardLayout({
   children,
@@ -28,6 +29,7 @@ export default async function DashboardLayout({
       <Navigation user={session.user} />
       <div className="flex">
         {!isAdmin && <MemberSidebar />}
+        {isAdmin && <AdminSidebar />}
         <main className="flex-1">
           <LiveDataSync />
           {children}
