@@ -47,6 +47,11 @@ export function Navigation({ user }: NavProps) {
       label: "Members",
       visible: isAdmin,
     },
+    {
+      href: "/admin/my-statement",
+      label: "My Statement",
+      visible: isAdmin,
+    },
   ]
 
   return (
