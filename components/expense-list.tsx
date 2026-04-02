@@ -34,14 +34,27 @@ interface ExpenseListProps {
 }
 
 const categoryLabels: Record<string, string> = {
-  FOOD: "Food & Dining",
-  TRAVEL: "Travel",
-  TRANSPORTATION: "Transportation",
-  ACCOMMODATION: "Accommodation",
-  OFFICE_SUPPLIES: "Office Supplies",
-  COMMUNICATION: "Communication",
-  ENTERTAINMENT: "Entertainment",
+  FREIGHT: "Freight/Gaddi",
+  PORTER: "Porter",
+  FOOD: "Food",
+  OFFICE_GOODS: "Office Goods",
+  HOTEL: "Hotel",
+  PETROL: "Petrol",
+  DIESEL: "Diesel",
   OTHER: "Other",
+}
+
+function getCategoryLabel(category: string): string {
+  if (categoryLabels[category]) {
+    return categoryLabels[category]
+  }
+
+  // Keep category visible even if DB/API sends an unexpected value.
+  return category
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
 }
 
 const statusVariants: Record<ExpenseStatus, "default" | "success" | "destructive" | "warning"> = {
@@ -74,7 +87,7 @@ export function ExpenseList({ expenses, isAdmin, onEdit, onDelete, onApprove, on
                   </Badge>
                 </div>
                 <p className="text-sm text-gray-500 mb-2">
-                  {categoryLabels[expense.category]}
+                  {getCategoryLabel(expense.category)}
                 </p>
                 {expense.description && (
                   <p className="text-sm text-gray-600 mb-2 line-clamp-2">
