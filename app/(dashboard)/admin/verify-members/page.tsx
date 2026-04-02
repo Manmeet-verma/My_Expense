@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getMembers, verifyMemberPassword } from '@/actions/auth'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { CheckCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import React from 'react'
 
@@ -32,16 +32,6 @@ export default async function VerifyMembersPage() {
 
   const members = await getMembers()
 
-  async function checkMemberPasswordAction(formData: FormData) {
-    'use server'
-
-    const memberId = formData.get('memberId')?.toString()
-    if (!memberId) return
-
-    const result = await verifyMemberPassword({ memberId })
-    // This will be handled by component state
-  }
-
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
@@ -55,7 +45,7 @@ export default async function VerifyMembersPage() {
         <div className="flex items-start gap-3">
           <AlertCircle className="h-5 w-5 mt-0.5 text-blue-600 flex-shrink-0" />
           <p className="text-sm text-blue-900">
-            If a member shows "No Password", use the Reset Member Password feature to set one.
+            If a member shows &quot;No Password&quot;, use the Reset Member Password feature to set one.
           </p>
         </div>
       </div>
@@ -80,24 +70,31 @@ export default async function VerifyMembersPage() {
 function MemberPasswordCard({ member }: { member: MemberRow }) {
   'use client'
 
-  const [status, setStatus] = React.useState<any>(null)
+  type PasswordStatus = {
+    hasPassword?: boolean
+    error?: string
+    message?: string
+  }
+
+  const [status, setStatus] = React.useState<PasswordStatus | null>(null)
   const [loading, setLoading] = React.useState(false)
 
-  async function handleCheck() {
+  const handleCheck = React.useCallback(async () => {
     setLoading(true)
     try {
       const result = await verifyMemberPassword({ memberId: member.id })
       setStatus(result)
-    } catch (error) {
+    } catch {
       setStatus({ error: 'Failed to check password' })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
-  }
+  }, [member.id])
 
   React.useEffect(() => {
     // Auto-check on mount
-    handleCheck()
-  }, [])
+    void handleCheck()
+  }, [handleCheck])
 
   const hasPassword = status?.hasPassword
   const isError = status?.error

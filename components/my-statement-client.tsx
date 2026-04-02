@@ -5,7 +5,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { Search, CheckCircle, XCircle, Clock } from "lucide-react"
+import { Search, CheckCircle, XCircle, Clock, Plus, Wallet } from "lucide-react"
+import { createFund } from "@/actions/expense"
+import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
 
 interface Expense {
   id: string
@@ -27,6 +30,176 @@ function formatCategory(category: string): string {
   return category.charAt(0) + category.slice(1).toLowerCase().replace(/_/g, " ")
 }
 
+function FundDepositModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    amount: "",
+    receivedFrom: "",
+    paymentMode: "CASH" as "CASH" | "GPAY" | "BANK_ACCOUNT",
+    upiId: "",
+    accountNumber: "",
+    fundDate: new Date().toISOString().split("T")[0],
+  })
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
+
+  if (!isOpen) return null
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+
+    const result = await createFund({
+      amount: parseFloat(formData.amount),
+      receivedFrom: formData.receivedFrom,
+      paymentMode: formData.paymentMode,
+      upiId: formData.paymentMode === "GPAY" ? formData.upiId : undefined,
+      accountNumber: formData.paymentMode === "BANK_ACCOUNT" ? formData.accountNumber : undefined,
+      fundDate: formData.fundDate,
+    })
+
+    if (result.error) {
+      setError(result.error)
+      setLoading(false)
+      return
+    }
+
+    setSuccess(true)
+    setLoading(false)
+    setTimeout(() => {
+      onClose()
+      setSuccess(false)
+      setFormData({
+        amount: "",
+        receivedFrom: "",
+        paymentMode: "CASH",
+        upiId: "",
+        accountNumber: "",
+        fundDate: new Date().toISOString().split("T")[0],
+      })
+    }, 1500)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-md p-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-900">Deposit Fund</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            ✕
+          </button>
+        </div>
+
+        {success ? (
+          <div className="text-center py-8">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <p className="text-green-600 font-medium">Fund deposited successfully!</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-3 bg-red-50 text-red-600 text-sm rounded">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="amount">Amount *</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                placeholder="Enter amount"
+                required
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="fundDate">Date *</Label>
+              <Input
+                id="fundDate"
+                type="date"
+                value={formData.fundDate}
+                onChange={(e) => setFormData({ ...formData, fundDate: e.target.value })}
+                required
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="receivedFrom">Received From *</Label>
+              <Input
+                id="receivedFrom"
+                value={formData.receivedFrom}
+                onChange={(e) => setFormData({ ...formData, receivedFrom: e.target.value })}
+                placeholder="Enter sender name"
+                required
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="paymentMode">Payment Mode *</Label>
+              <Select
+                value={formData.paymentMode}
+                onChange={(e) => setFormData({ ...formData, paymentMode: e.target.value as "CASH" | "GPAY" | "BANK_ACCOUNT" })}
+              >
+                <option value="CASH">Cash</option>
+                <option value="GPAY">GPay</option>
+                <option value="BANK_ACCOUNT">Bank Account</option>
+              </Select>
+            </div>
+
+            {formData.paymentMode === "GPAY" && (
+              <div>
+                <Label htmlFor="upiId">UPI ID *</Label>
+                <Input
+                  id="upiId"
+                  value={formData.upiId}
+                  onChange={(e) => setFormData({ ...formData, upiId: e.target.value })}
+                  placeholder="Enter UPI ID (e.g., mobile@upi)"
+                  required
+                  className="mt-1"
+                />
+              </div>
+            )}
+
+            {formData.paymentMode === "BANK_ACCOUNT" && (
+              <div>
+                <Label htmlFor="accountNumber">Account Number *</Label>
+                <Input
+                  id="accountNumber"
+                  value={formData.accountNumber}
+                  onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                  placeholder="Enter account number"
+                  required
+                  className="mt-1"
+                />
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <Button type="submit" disabled={loading} className="flex-1">
+                {loading ? "Submitting..." : "Submit"}
+              </Button>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function MyStatementClient({ userId }: MyStatementClientProps) {
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
@@ -36,6 +209,7 @@ export function MyStatementClient({ userId }: MyStatementClientProps) {
   const [activeTab, setActiveTab] = useState<"approved" | "rejected" | "pending">("approved")
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [showFundModal, setShowFundModal] = useState(false)
 
   async function handleSearch() {
     if (!fromDate || !toDate) return
@@ -208,6 +382,10 @@ export function MyStatementClient({ userId }: MyStatementClientProps) {
           </Card>
         </>
       )}
+
+      <FundDepositModal isOpen={showFundModal} onClose={() => setShowFundModal(false)} />
     </div>
   )
 }
+
+export { FundDepositModal }

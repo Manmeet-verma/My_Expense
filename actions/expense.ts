@@ -412,3 +412,64 @@ export async function updateUserBudget(newBudget: number) {
 
   return { success: true, totalBudget: updated.totalBudget }
 }
+
+const fundSchema = z.object({
+  amount: z.number().positive("Amount must be positive"),
+  receivedFrom: z.string().min(1, "Received from is required"),
+  paymentMode: z.enum(["CASH", "GPAY", "BANK_ACCOUNT"]),
+  upiId: z.string().optional(),
+  accountNumber: z.string().optional(),
+  fundDate: z.string().optional(),
+})
+
+export async function createFund(data: z.infer<typeof fundSchema>) {
+  const session = await auth()
+  
+  if (!session?.user) {
+    return { error: "Unauthorized" }
+  }
+
+  if (session.user.role !== "MEMBER") {
+    return { error: "Only members can deposit funds" }
+  }
+
+  const result = fundSchema.safeParse(data)
+
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { amount, receivedFrom, paymentMode, upiId, accountNumber, fundDate } = result.data
+
+  await prisma.fund.create({
+    data: {
+      amount,
+      receivedFrom,
+      paymentMode,
+      upiId: paymentMode === "GPAY" ? upiId || null : null,
+      accountNumber: paymentMode === "BANK_ACCOUNT" ? accountNumber || null : null,
+      fundDate: fundDate ? new Date(fundDate) : new Date(),
+      userId: session.user.id,
+    },
+  })
+
+  revalidatePath("/dashboard/my-statement")
+  return { success: true }
+}
+
+export async function getMyFunds() {
+  const session = await auth()
+  
+  if (!session?.user) {
+    return []
+  }
+
+  if (session.user.role !== "MEMBER") {
+    return []
+  }
+
+  return await prisma.fund.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: "desc" },
+  })
+}
