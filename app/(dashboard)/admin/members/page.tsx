@@ -16,7 +16,13 @@ type MemberRow = {
 }
 
 export default async function AdminMembersPage() {
-  const session = await auth()
+  let session = null
+  try {
+    session = await auth()
+  } catch (error) {
+    console.error("Auth error:", error)
+    redirect("/login")
+  }
 
   if (!session?.user) {
     redirect("/login")
@@ -26,7 +32,14 @@ export default async function AdminMembersPage() {
     redirect("/dashboard")
   }
 
-  const members = await getMembers()
+  let members: MemberRow[] = []
+  try {
+    const result = await getMembers()
+    members = (result || []) as MemberRow[]
+  } catch (error) {
+    console.error("getMembers error:", error)
+    members = []
+  }
 
-  return <MembersContent members={members as MemberRow[]} />
+  return <MembersContent members={members} />
 }

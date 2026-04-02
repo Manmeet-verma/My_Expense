@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { deleteMember } from "@/actions/delete-member"
@@ -18,13 +18,13 @@ interface MemberRow {
 }
 
 interface MembersContentProps {
-  members: MemberRow[]
+  members?: MemberRow[]
 }
 
 export default function MembersContent({ members: initialMembers }: MembersContentProps) {
   const router = useRouter()
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [members, setMembers] = useState<MemberRow[]>(initialMembers)
+  const members = useMemo(() => initialMembers ?? [], [initialMembers])
 
   async function handleDelete(memberId: string) {
     try {
@@ -40,7 +40,6 @@ export default function MembersContent({ members: initialMembers }: MembersConte
       if (result && 'error' in result) {
         alert(result.error)
       } else {
-        setMembers((prev) => prev.filter((m) => m.id !== memberId))
         router.refresh()
       }
     } catch (err) {
