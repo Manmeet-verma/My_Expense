@@ -22,7 +22,18 @@ export function MemberSidebar() {
   }, [])
 
   if (!stats) {
-    return null
+    return (
+      <aside className="bg-white border-r border-gray-200 hidden md:block sticky top-16">
+        <div className="flex flex-col gap-2 p-2">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-gray-50 rounded p-2 animate-pulse">
+              <div className="h-3 w-16 bg-gray-200 rounded mb-1"></div>
+              <div className="h-4 w-20 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </aside>
+    )
   }
 
   const cards = [

@@ -1,1 +1,0 @@
-DELETE FROM "User" WHERE email = 'member@example.com';
