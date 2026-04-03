@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { getExpenseStats } from "@/actions/expense"
-import { TrendingUp, Clock, CheckCircle, XCircle, DollarSign } from "lucide-react"
+import { TrendingUp, Clock, CheckCircle, XCircle, DollarSign, ChevronDown } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 
 export function AdminSidebar() {
+  const [isOpen, setIsOpen] = useState(false)
   const [stats, setStats] = useState<{
     total: number
     submittedAmount: number
@@ -24,16 +25,39 @@ export function AdminSidebar() {
 
   if (!stats) {
     return (
-      <aside className="bg-white border-r border-gray-200 hidden md:block sticky top-16">
-        <div className="flex flex-col gap-2 p-2">
-          {[...Array(7)].map((_, i) => (
-            <div key={i} className="bg-gray-50 rounded p-2 animate-pulse">
-              <div className="h-3 w-16 bg-gray-200 rounded mb-1"></div>
-              <div className="h-4 w-20 bg-gray-200 rounded"></div>
+      <>
+        <div className="md:hidden bg-white border-b border-gray-200 px-3 py-2">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full flex items-center justify-between px-3 py-2 bg-blue-600 text-white rounded-lg"
+          >
+            <span className="font-medium">{isOpen ? "Close Admin Sidebar" : "Open Admin Sidebar"}</span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {isOpen && (
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {[...Array(7)].map((_, i) => (
+                <div key={i} className="bg-gray-50 rounded p-2 animate-pulse">
+                  <div className="h-3 w-16 bg-gray-200 rounded mb-1"></div>
+                  <div className="h-4 w-20 bg-gray-200 rounded"></div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      </aside>
+
+        <aside className="bg-white border-r border-gray-200 hidden md:block sticky top-16">
+          <div className="flex flex-col gap-2 p-2">
+            {[...Array(7)].map((_, i) => (
+              <div key={i} className="bg-gray-50 rounded p-2 animate-pulse">
+                <div className="h-3 w-16 bg-gray-200 rounded mb-1"></div>
+                <div className="h-4 w-20 bg-gray-200 rounded"></div>
+              </div>
+            ))}
+          </div>
+        </aside>
+      </>
     )
   }
 
@@ -48,18 +72,44 @@ export function AdminSidebar() {
   ]
 
   return (
-    <aside className="bg-white border-r border-gray-200 hidden md:block sticky top-16">
-      <div className="flex flex-col gap-2 p-2">
-        {cards.map((card) => (
-          <div key={card.title} className="bg-gray-50 rounded p-2">
-            <div className="flex items-center gap-1 mb-1">
-              <card.icon className={`h-3 w-3 ${card.color}`} />
-              <span className="text-xs text-gray-500">{card.title}</span>
-            </div>
-            <p className="text-sm font-semibold text-gray-900">{card.value}</p>
+    <>
+      <div className="md:hidden bg-white border-b border-gray-200 px-3 py-2">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center justify-between px-3 py-2 bg-blue-600 text-white rounded-lg"
+        >
+          <span className="font-medium">{isOpen ? "Close Admin Sidebar" : "Open Admin Sidebar"}</span>
+          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        </button>
+
+        {isOpen && (
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {cards.map((card) => (
+              <div key={card.title} className="bg-gray-50 rounded p-2">
+                <div className="flex items-center gap-1 mb-1">
+                  <card.icon className={`h-3 w-3 ${card.color}`} />
+                  <span className="text-xs text-gray-500">{card.title}</span>
+                </div>
+                <p className="text-sm font-semibold text-gray-900">{card.value}</p>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
-    </aside>
+
+      <aside className="bg-white border-r border-gray-200 hidden md:block sticky top-16">
+        <div className="flex flex-col gap-2 p-2">
+          {cards.map((card) => (
+            <div key={card.title} className="bg-gray-50 rounded p-2">
+              <div className="flex items-center gap-1 mb-1">
+                <card.icon className={`h-3 w-3 ${card.color}`} />
+                <span className="text-xs text-gray-500">{card.title}</span>
+              </div>
+              <p className="text-sm font-semibold text-gray-900">{card.value}</p>
+            </div>
+          ))}
+        </div>
+      </aside>
+    </>
   )
 }

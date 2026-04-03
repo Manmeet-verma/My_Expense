@@ -7,7 +7,6 @@ type MemberRow = {
   id: string
   name: string | null
   email: string
-  totalBudget: number
   totalEdits: number
   createdAt: Date
   _count: {

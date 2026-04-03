@@ -12,7 +12,6 @@ type MemberRow = {
   id: string
   name: string | null
   email: string
-  totalBudget: number
   createdAt: Date
   _count: {
     expenses: number
