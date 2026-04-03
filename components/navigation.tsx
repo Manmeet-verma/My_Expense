@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, LogOut, Users, Wallet, PanelRight, PanelLeft, FileText } from "lucide-react"
+import { LayoutDashboard, LogOut, Users, Wallet, PanelRight, PanelLeft, FileText, List } from "lucide-react"
 
 interface NavProps {
   user: {
@@ -123,7 +123,7 @@ export function Navigation({ user }: NavProps) {
                 onClick={toggleMobileMenu}
                 className="h-8 w-8 p-0 md:hidden"
               >
-                <PanelRight className="w-5 h-5" />
+                <List className="w-5 h-5" />
               </Button>
             </div>
           </div>
