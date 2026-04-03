@@ -9,7 +9,6 @@ interface MemberRow {
   id: string
   name: string | null
   email: string
-  totalBudget: number
   totalEdits: number
   createdAt: Date
   _count: {
@@ -65,7 +64,6 @@ export default function MembersContent({ members: initialMembers }: MembersConte
                 <tr>
                   <th className="px-4 py-3 font-semibold">Name</th>
                   <th className="px-4 py-3 font-semibold">Email</th>
-                  <th className="px-4 py-3 font-semibold">Budget</th>
                   <th className="px-4 py-3 font-semibold">Expenses</th>
                   <th className="px-4 py-3 font-semibold">Edits</th>
                   <th className="px-4 py-3 font-semibold">Joined</th>
@@ -75,7 +73,7 @@ export default function MembersContent({ members: initialMembers }: MembersConte
               <tbody>
                 {members.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
+                    <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
                       No members found
                     </td>
                   </tr>
@@ -84,7 +82,6 @@ export default function MembersContent({ members: initialMembers }: MembersConte
                     <tr key={member.id} className="border-t border-gray-100">
                       <td className="px-4 py-3 font-medium text-gray-900">{member.name || "-"}</td>
                       <td className="px-4 py-3 text-gray-700">{member.email}</td>
-                      <td className="px-4 py-3 text-gray-900">{formatCurrency(member.totalBudget)}</td>
                       <td className="px-4 py-3 text-gray-700">{member._count.expenses}</td>
                       <td className="px-4 py-3 text-gray-700">{member.totalEdits}</td>
                       <td className="px-4 py-3 text-gray-700">{formatDate(member.createdAt)}</td>
@@ -115,10 +112,6 @@ export default function MembersContent({ members: initialMembers }: MembersConte
                     <p className="text-sm text-gray-600">{member.email}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-gray-500">Budget</p>
-                      <p className="font-medium text-gray-900">{formatCurrency(member.totalBudget)}</p>
-                    </div>
                     <div>
                       <p className="text-gray-500">Expenses</p>
                       <p className="font-medium text-gray-900">{member._count.expenses}</p>

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, LogOut, Users, Receipt, Menu, X, Wallet } from "lucide-react"
+import { LayoutDashboard, LogOut, Users, Receipt, Menu, X, Wallet, FileText } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
@@ -41,31 +41,37 @@ export function Navigation({ user }: NavProps) {
     {
       href: "/dashboard",
       label: "Dashboard",
+      icon: LayoutDashboard,
       visible: true,
     },
     {
       href: "/dashboard/expense-entry",
       label: "Expense Entry",
+      icon: Receipt,
       visible: !isAdmin,
     },
     {
       href: "/dashboard/my-statement",
       label: "My Statement",
+      icon: FileText,
       visible: !isAdmin,
     },
     {
       href: "/admin",
       label: "Admin",
+      icon: LayoutDashboard,
       visible: isAdmin,
     },
     {
       href: "/admin/members",
       label: "Members",
+      icon: Users,
       visible: isAdmin,
     },
     {
       href: "/admin/my-statement",
       label: "My Statement",
+      icon: FileText,
       visible: isAdmin,
     },
   ]
@@ -122,12 +128,13 @@ export function Navigation({ user }: NavProps) {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "text-sm font-medium transition-colors",
+                      "inline-flex items-center gap-2 text-sm font-medium transition-colors",
                       pathname === item.href
                         ? "text-red-600"
                         : "text-gray-600 hover:text-red-600"
                     )}
                   >
+                    <item.icon className="h-4 w-4" />
                     {item.label}
                   </Link>
                 ))}
@@ -193,12 +200,13 @@ export function Navigation({ user }: NavProps) {
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      "inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                       pathname === item.href
                         ? "text-red-600"
                         : "text-gray-600"
                     )}
                   >
+                    <item.icon className="h-4 w-4" />
                     {item.label}
                   </Link>
                 ))}
