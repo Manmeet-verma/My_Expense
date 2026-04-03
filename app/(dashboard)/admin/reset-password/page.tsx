@@ -3,6 +3,12 @@ import { redirect } from "next/navigation"
 import { getMembers } from "@/actions/auth"
 import { ResetMemberPasswordForm } from "@/components/forms/reset-member-password-form"
 
+type MemberRow = {
+  id: string
+  name: string | null
+  email: string
+}
+
 export default async function AdminResetPasswordPage() {
   let session = null
   try {
@@ -20,9 +26,9 @@ export default async function AdminResetPasswordPage() {
     redirect("/dashboard")
   }
 
-  let members = []
+  let members: MemberRow[] = []
   try {
-    members = await getMembers() || []
+    members = (await getMembers()) || []
   } catch (error) {
     console.error("Get members error:", error)
     members = []
