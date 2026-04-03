@@ -1,8 +1,8 @@
 import { auth } from "@/lib/auth"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { getAllExpenses, getExpenseStats } from "@/actions/expense"
-import { StatsCards } from "@/components/stats-cards"
+import { getAllExpenses } from "@/actions/expense"
+
 import { approveOrRejectExpense, markExpensePaid } from "@/actions/expense"
 import { getAdmins } from "@/actions/auth"
 import { formatCurrency, formatDate } from "@/lib/utils"
@@ -46,18 +46,15 @@ export default async function AdminPage() {
   }
 
   let expenses: Expense[] = []
-  let stats = null
   let admins: Awaited<ReturnType<typeof getAdmins>> = []
 
   try {
     const results = await Promise.all([
       getAllExpenses(),
-      getExpenseStats(),
       getAdmins(),
     ])
     expenses = results[0] as Expense[]
-    stats = results[1]
-    admins = results[2]
+    admins = results[1]
   } catch (error) {
     console.error("Admin page data error:", error)
   }
@@ -98,8 +95,6 @@ export default async function AdminPage() {
         <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="text-gray-600 mt-1">Review and manage expense approvals</p>
       </div>
-
-      {stats && <StatsCards stats={stats} mode="admin" />}
 
       <div className="mt-8">
         <AdminSection admins={admins} currentAdminId={session.user.id} />

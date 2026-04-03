@@ -91,6 +91,11 @@ export async function getAllExpenses() {
   }
 
   return await prisma.expense.findMany({
+    where: {
+      createdBy: {
+        role: "MEMBER",
+      },
+    },
     include: {
       createdBy: {
         select: {
