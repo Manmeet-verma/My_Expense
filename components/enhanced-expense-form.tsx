@@ -49,6 +49,12 @@ export function EnhancedExpenseForm({
   const [liveTotalAmountUsed, setLiveTotalAmountUsed] = useState(totalAmountUsed)
   const [selectedCategory, setSelectedCategory] = useState<string>("FREIGHT")
 
+  function normalizeOptionalString(value: FormDataEntryValue | null) {
+    if (typeof value !== "string") return undefined
+    const trimmed = value.trim()
+    return trimmed ? trimmed : undefined
+  }
+
   useEffect(() => {
     setLiveTotalAmountUsed(totalAmountUsed)
   }, [totalAmountUsed])
@@ -61,8 +67,8 @@ export function EnhancedExpenseForm({
     const form = e.currentTarget
     const formData = new FormData(form)
     const data = {
-      title: formData.get("title") as string,
-      description: formData.get("description") as string || undefined,
+      title: normalizeOptionalString(formData.get("title")),
+      description: normalizeOptionalString(formData.get("description")),
       amount: parseFloat(formData.get("amount") as string),
       category: formData.get("category") as "FREIGHT" | "PORTER" | "FOOD" | "OFFICE_GOODS" | "HOTEL" | "PETROL" | "DIESEL" | "OTHER",
     }

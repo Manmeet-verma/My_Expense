@@ -36,6 +36,12 @@ export function ExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  function normalizeOptionalString(value: FormDataEntryValue | null) {
+    if (typeof value !== "string") return undefined
+    const trimmed = value.trim()
+    return trimmed ? trimmed : undefined
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
@@ -43,8 +49,8 @@ export function ExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
 
     const formData = new FormData(e.currentTarget)
     const data = {
-      title: formData.get("title") as string,
-      description: formData.get("description") as string || undefined,
+      title: normalizeOptionalString(formData.get("title")),
+      description: normalizeOptionalString(formData.get("description")),
       amount: parseFloat(formData.get("amount") as string),
       category: formData.get("category") as ExpenseCategory,
     }

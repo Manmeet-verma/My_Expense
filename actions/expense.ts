@@ -5,9 +5,14 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 
+const optionalStringSchema = z.preprocess(
+  (value) => (value === null || value === "" ? undefined : value),
+  z.string().optional()
+)
+
 const expenseSchema = z.object({
-  title: z.string().optional(),
-  description: z.string().optional(),
+  title: optionalStringSchema,
+  description: optionalStringSchema,
   amount: z.number().positive("Amount must be positive"),
   category: z.enum(["FREIGHT", "PORTER", "FOOD", "OFFICE_GOODS", "HOTEL", "PETROL", "DIESEL", "OTHER"]),
 })

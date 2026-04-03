@@ -18,11 +18,21 @@ export function LiveDataSync({ intervalMs = 30000 }: LiveDataSyncProps) {
 
   useEffect(() => {
     let lastRefresh = 0
+    let refreshInFlight = false
+
     const refreshWithCooldown = () => {
       const now = Date.now()
-      if (now - lastRefresh < 1200) return
+      if (refreshInFlight) return
+      if (now - lastRefresh < 5000) return
+
+      refreshInFlight = true
       lastRefresh = now
       router.refresh()
+
+      // Prevent burst refresh loops that can exhaust DB pool connections.
+      window.setTimeout(() => {
+        refreshInFlight = false
+      }, 1500)
     }
 
     const unsubscribe = subscribeToExpenseChanges(() => {
@@ -42,7 +52,7 @@ export function LiveDataSync({ intervalMs = 30000 }: LiveDataSyncProps) {
           if (document.visibilityState === "visible") {
             refreshWithCooldown()
           }
-        }, intervalMs)
+        }, Math.max(intervalMs, 60000))
 
     document.addEventListener("visibilitychange", handleVisible)
 
