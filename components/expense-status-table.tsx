@@ -33,8 +33,8 @@ export function ApprovedExpenseTable({ expenses }: ApprovedExpenseTableProps) {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-      <div className="hidden md:block overflow-x-auto">
-        <table className="min-w-full text-sm">
+      <div className="overflow-x-auto">
+        <table className="min-w-[640px] w-full text-xs sm:text-sm">
           <thead className="bg-green-50 text-left">
             <tr>
               <th className="px-4 py-3 font-semibold text-green-800">Date</th>
@@ -61,7 +61,7 @@ export function ApprovedExpenseTable({ expenses }: ApprovedExpenseTableProps) {
         </table>
       </div>
 
-      <div className="md:hidden divide-y divide-gray-100">
+      <div className="hidden divide-y divide-gray-100">
         {expenses.map((expense) => (
           <div key={expense.id} className="p-4 space-y-2">
             <div className="flex justify-between items-start">
@@ -97,8 +97,8 @@ export function RejectedExpenseTable({ expenses }: RejectedExpenseTableProps) {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-      <div className="hidden md:block overflow-x-auto">
-        <table className="min-w-full text-sm">
+      <div className="overflow-x-auto">
+        <table className="min-w-[640px] w-full text-xs sm:text-sm">
           <thead className="bg-red-50 text-left">
             <tr>
               <th className="px-4 py-3 font-semibold text-red-800">Date</th>
@@ -125,7 +125,7 @@ export function RejectedExpenseTable({ expenses }: RejectedExpenseTableProps) {
         </table>
       </div>
 
-      <div className="md:hidden divide-y divide-gray-100">
+      <div className="hidden divide-y divide-gray-100">
         {expenses.map((expense) => (
           <div key={expense.id} className="p-4 space-y-2">
             <div className="flex justify-between items-start">

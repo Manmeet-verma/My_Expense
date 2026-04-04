@@ -194,8 +194,8 @@ export async function deleteExpense(id: string) {
 export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema>) {
   const session = await auth()
   
-  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
-    return { error: "Unauthorized - Admin or Supervisor access required" }
+  if (!session?.user || session.user.role !== "SUPERVISOR") {
+    return { error: "Unauthorized - Supervisor access required" }
   }
 
   const result = approvalSchema.safeParse(data)
@@ -214,16 +214,8 @@ export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema
     return { error: "Expense not found" }
   }
 
-  if (expense.status === "PAID") {
-    return { error: "Paid expenses cannot be changed" }
-  }
-
-  if (expense.status === "APPROVED" && status === "APPROVED") {
-    return { error: "Expense is already approved" }
-  }
-
-  if (expense.status === "REJECTED" && status === "REJECTED") {
-    return { error: "Expense is already rejected" }
+  if (expense.status !== "PENDING") {
+    return { error: "Only pending expenses can be approved or rejected by supervisor" }
   }
 
   await prisma.expense.update({
@@ -242,8 +234,8 @@ export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema
 export async function markExpensePaid(data: z.infer<typeof paymentSchema>) {
   const session = await auth()
 
-  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
-    return { error: "Unauthorized - Admin or Supervisor access required" }
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Unauthorized - Admin access required" }
   }
 
   const result = paymentSchema.safeParse(data)
@@ -478,6 +470,8 @@ const distributeFundSchema = z.object({
   amount: z.number().positive("Amount must be positive"),
 })
 
+const ADMIN_DISTRIBUTION_PREFIX = "Admin Distribution"
+
 export async function distributeFund(data: z.infer<typeof distributeFundSchema>) {
   const session = await auth()
   
@@ -497,18 +491,82 @@ export async function distributeFund(data: z.infer<typeof distributeFundSchema>)
 
   const { memberId, amount } = result.data
 
-  await prisma.user.update({
-    where: { id: memberId },
-    data: {
-      receivedAmount: {
-        increment: amount,
-      },
+  const member = await prisma.user.findFirst({
+    where: {
+      id: memberId,
+      role: "MEMBER",
+    },
+    select: {
+      id: true,
     },
   })
 
+  if (!member) {
+    return { error: "Member not found" }
+  }
+
+  const distributedBy = session.user.name || session.user.email
+  const receivedFrom = `${ADMIN_DISTRIBUTION_PREFIX}: ${distributedBy}`
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: memberId },
+      data: {
+        receivedAmount: {
+          increment: amount,
+        },
+      },
+    }),
+    prisma.fund.create({
+      data: {
+        amount,
+        receivedFrom,
+        paymentMode: "CASH",
+        fundDate: new Date(),
+        userId: memberId,
+      },
+    }),
+  ])
+
   revalidatePath("/admin")
   revalidatePath("/admin/fund-distribution")
+  revalidatePath("/admin/dashboard")
+  revalidatePath("/dashboard/my-statement")
+  revalidatePath("/dashboard/statement")
   return { success: true }
+}
+
+export async function getDistributedFundTransactions() {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return []
+  }
+
+  return await prisma.fund.findMany({
+    where: {
+      receivedFrom: {
+        startsWith: ADMIN_DISTRIBUTION_PREFIX,
+      },
+    },
+    select: {
+      id: true,
+      amount: true,
+      receivedFrom: true,
+      fundDate: true,
+      createdAt: true,
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 100,
+  })
 }
 
 export async function getAllMembers() {

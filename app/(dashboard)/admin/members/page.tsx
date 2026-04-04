@@ -31,6 +31,9 @@ export default async function AdminMembersPage() {
     redirect("/dashboard")
   }
 
+  const isAdmin = session.user.role === "ADMIN"
+  const isSupervisor = session.user.role === "SUPERVISOR"
+
   let members: MemberRow[] = []
   try {
     const result = await getMembers()
@@ -40,5 +43,5 @@ export default async function AdminMembersPage() {
     members = []
   }
 
-  return <MembersContent members={members} canManage />
+  return <MembersContent members={members} canManage={isAdmin} canApproveExpenses={isSupervisor} />
 }

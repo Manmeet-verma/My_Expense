@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { distributeFund, getAllMembers } from "@/actions/expense"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +12,7 @@ import { DollarSign } from "lucide-react"
 type Member = Awaited<ReturnType<typeof getAllMembers>>[number]
 
 export function FundDistributionForm() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
@@ -51,6 +53,7 @@ export function FundDistributionForm() {
 
     setSuccess(true)
     setLoading(false)
+    router.refresh()
     setTimeout(() => {
       setSuccess(false)
       setSelectedMember("")

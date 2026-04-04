@@ -43,6 +43,9 @@ export default async function AdminPage() {
     redirect("/dashboard")
   }
 
+  const isAdmin = session.user.role === "ADMIN"
+  const isSupervisor = session.user.role === "SUPERVISOR"
+
   let expenses: Expense[] = []
   try {
     expenses = await getAllExpenses()
@@ -87,9 +90,9 @@ export default async function AdminPage() {
         <p className="text-gray-600 mt-1">Review and manage expense approvals</p>
       </div>
 
-      <div className="mt-8 flex items-center justify-between gap-3">
+      <div className="mt-8 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <h2 className="text-lg font-semibold text-gray-900">Member Accounts</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <Link href="/admin/reset-password" className={buttonVariants({ variant: "outline" })}>
             <span className="inline-flex items-center gap-2">
               <KeyRound className="h-4 w-4" />
@@ -107,7 +110,7 @@ export default async function AdminPage() {
           <h2 className="text-lg font-semibold text-gray-900">Expense Review</h2>
         </div>
 
-        <div className="md:hidden space-y-3">
+        <div className="hidden space-y-3">
           {expenses.length === 0 ? (
             <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-gray-500">
               No expenses submitted yet
@@ -137,7 +140,7 @@ export default async function AdminPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {expense.status === "PENDING" && (
+                  {expense.status === "PENDING" && isSupervisor && (
                     <>
                       <form action={approveAction} className="flex-1 min-w-[120px]">
                         <input type="hidden" name="id" value={expense.id} />
@@ -154,16 +157,11 @@ export default async function AdminPage() {
                     </>
                   )}
 
-                  {expense.status === "REJECTED" && (
-                    <form action={approveAction} className="w-full">
-                      <input type="hidden" name="id" value={expense.id} />
-                      <Button type="submit" size="sm" variant="success" className="w-full">
-                        Approve
-                      </Button>
-                    </form>
+                  {expense.status === "PENDING" && isAdmin && (
+                    <span className="text-xs text-gray-500">Waiting for supervisor review</span>
                   )}
 
-                  {expense.status === "APPROVED" && (
+                  {expense.status === "APPROVED" && isAdmin && (
                     <form action={paidAction} className="w-full">
                       <input type="hidden" name="id" value={expense.id} />
                       <Button type="submit" size="sm" variant="default" className="w-full">
@@ -172,8 +170,16 @@ export default async function AdminPage() {
                     </form>
                   )}
 
+                  {expense.status === "APPROVED" && isSupervisor && (
+                    <span className="text-xs text-gray-500">Sent to admin for payment</span>
+                  )}
+
                   {expense.status === "PAID" && (
                     <span className="text-xs text-gray-500">No further action</span>
+                  )}
+
+                  {expense.status === "REJECTED" && (
+                    <span className="text-xs text-gray-500">Rejected by supervisor</span>
                   )}
                 </div>
               </div>
@@ -181,8 +187,8 @@ export default async function AdminPage() {
           )}
         </div>
 
-        <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+          <table className="min-w-[760px] w-full text-xs sm:text-sm">
             <thead className="bg-gray-50 text-left text-gray-600">
               <tr>
                 <th className="px-4 py-3 font-semibold">Member Name</th>
@@ -214,7 +220,7 @@ export default async function AdminPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
-                        {expense.status === "PENDING" && (
+                        {expense.status === "PENDING" && isSupervisor && (
                           <>
                             <form action={approveAction}>
                               <input type="hidden" name="id" value={expense.id} />
@@ -231,16 +237,11 @@ export default async function AdminPage() {
                           </>
                         )}
 
-                        {expense.status === "REJECTED" && (
-                          <form action={approveAction}>
-                            <input type="hidden" name="id" value={expense.id} />
-                            <Button type="submit" size="sm" variant="success">
-                              Approve
-                            </Button>
-                          </form>
+                        {expense.status === "PENDING" && isAdmin && (
+                          <span className="text-xs text-gray-500">Waiting for supervisor review</span>
                         )}
 
-                        {expense.status === "APPROVED" && (
+                        {expense.status === "APPROVED" && isAdmin && (
                           <form action={paidAction}>
                             <input type="hidden" name="id" value={expense.id} />
                             <Button type="submit" size="sm" variant="default">
@@ -249,8 +250,16 @@ export default async function AdminPage() {
                           </form>
                         )}
 
+                        {expense.status === "APPROVED" && isSupervisor && (
+                          <span className="text-xs text-gray-500">Sent to admin for payment</span>
+                        )}
+
                         {expense.status === "PAID" && (
                           <span className="text-xs text-gray-500">No further action</span>
+                        )}
+
+                        {expense.status === "REJECTED" && (
+                          <span className="text-xs text-gray-500">Rejected by supervisor</span>
                         )}
                       </div>
                     </td>

@@ -31,14 +31,14 @@ export default async function AdminDashboardPage() {
       <AdminSection admins={admins} currentAdminId={session.user.id} />
 
       <div className="mt-10">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
           <h2 className="text-lg font-semibold text-gray-900">Category Usage</h2>
           <Link href="/admin/add-category" className={buttonVariants()}>
             Create Category
           </Link>
         </div>
 
-        <div className="md:hidden space-y-3">
+        <div className="hidden space-y-3">
           {categories.length === 0 ? (
             <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-gray-500">
               No categories added yet
@@ -70,8 +70,8 @@ export default async function AdminDashboardPage() {
           )}
         </div>
 
-        <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+          <table className="min-w-[760px] w-full text-xs sm:text-sm">
             <thead className="bg-gray-50 text-left text-gray-600">
               <tr>
                 <th className="px-4 py-3 font-semibold">Category</th>

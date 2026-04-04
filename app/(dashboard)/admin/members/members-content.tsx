@@ -20,6 +20,7 @@ interface MemberRow {
 interface MembersContentProps {
   members?: MemberRow[]
   canManage?: boolean
+  canApproveExpenses?: boolean
 }
 
 interface MemberExpense {
@@ -34,7 +35,11 @@ interface MemberExpense {
 
 type ExpenseView = "approved" | "rejected" | "pending"
 
-export default function MembersContent({ members: initialMembers, canManage = false }: MembersContentProps) {
+export default function MembersContent({
+  members: initialMembers,
+  canManage = false,
+  canApproveExpenses = false,
+}: MembersContentProps) {
   const router = useRouter()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null)
@@ -106,6 +111,10 @@ export default function MembersContent({ members: initialMembers, canManage = fa
   }
 
   async function approveSingleExpense(id: string) {
+    if (!canApproveExpenses) {
+      return
+    }
+
     setApproving(true)
     const result = await approveOrRejectExpense({ id, status: "APPROVED" })
     if (result?.error) {
@@ -121,6 +130,10 @@ export default function MembersContent({ members: initialMembers, canManage = fa
   }
 
   async function approveSelectedExpenses() {
+    if (!canApproveExpenses) {
+      return
+    }
+
     if (selectedPendingIds.length === 0) {
       alert("Please select pending expenses first")
       return
@@ -166,7 +179,7 @@ export default function MembersContent({ members: initialMembers, canManage = fa
         : expensesByStatus.pending
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] p-6">
+    <div className="min-h-[calc(100vh-4rem)] p-3 sm:p-6">
       <div>
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Member List</h1>
@@ -176,8 +189,8 @@ export default function MembersContent({ members: initialMembers, canManage = fa
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-white">
-          <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full text-sm">
+          <div className="overflow-x-auto">
+            <table className="min-w-[780px] w-full text-xs sm:text-sm">
               <thead className="bg-gray-50 text-left text-gray-600">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Name</th>
@@ -232,7 +245,7 @@ export default function MembersContent({ members: initialMembers, canManage = fa
             </table>
           </div>
 
-          <div className="md:hidden divide-y divide-gray-100">
+          <div className="hidden divide-y divide-gray-100">
             {members.length === 0 ? (
               <div className="px-4 py-8 text-center text-gray-500">No members found</div>
             ) : (
@@ -318,7 +331,7 @@ export default function MembersContent({ members: initialMembers, canManage = fa
               </button>
             </div>
 
-            {activeView === "pending" && expensesByStatus.pending.length > 0 && (
+            {activeView === "pending" && canApproveExpenses && expensesByStatus.pending.length > 0 && (
               <div className="flex flex-col items-start gap-3 mb-4 max-w-xs">
                 <label className="inline-flex items-center gap-2 text-sm text-gray-700">
                   <input
@@ -344,10 +357,10 @@ export default function MembersContent({ members: initialMembers, canManage = fa
               <div className="py-8 text-center text-gray-500">No expenses found in this section</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
+                <table className="min-w-[860px] w-full text-xs sm:text-sm">
                   <thead className="bg-gray-50 text-left text-gray-600">
                     <tr>
-                      {activeView === "pending" && <th className="px-3 py-2 font-semibold">Select</th>}
+                      {activeView === "pending" && canApproveExpenses && <th className="px-3 py-2 font-semibold">Select</th>}
                       <th className="px-3 py-2 font-semibold">Title</th>
                       <th className="px-3 py-2 font-semibold">Category</th>
                       <th className="px-3 py-2 font-semibold">Amount</th>
@@ -359,7 +372,7 @@ export default function MembersContent({ members: initialMembers, canManage = fa
                   <tbody>
                     {currentExpenses.map((expense) => (
                       <tr key={expense.id} className="border-t border-gray-100">
-                        {activeView === "pending" && (
+                        {activeView === "pending" && canApproveExpenses && (
                           <td className="px-3 py-2">
                             <input
                               type="checkbox"
@@ -374,7 +387,7 @@ export default function MembersContent({ members: initialMembers, canManage = fa
                         <td className="px-3 py-2 text-gray-700">{formatDate(expense.createdAt)}</td>
                         <td className="px-3 py-2 text-gray-700">{expense.status}</td>
                         <td className="px-3 py-2">
-                          {activeView === "pending" ? (
+                          {activeView === "pending" && canApproveExpenses ? (
                             <button
                               onClick={() => approveSingleExpense(expense.id)}
                               disabled={approving}
@@ -382,6 +395,8 @@ export default function MembersContent({ members: initialMembers, canManage = fa
                             >
                               Approve
                             </button>
+                          ) : activeView === "pending" ? (
+                            <span className="text-xs text-gray-400">Waiting for supervisor</span>
                           ) : (
                             <span className="text-xs text-gray-400">-</span>
                           )}
