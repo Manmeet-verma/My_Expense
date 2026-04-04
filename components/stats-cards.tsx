@@ -32,18 +32,11 @@ export function StatsCards({ stats, mode = "member" }: StatsCardsProps) {
       bgColor: "bg-blue-50",
     },
     {
-      title: "Budget",
+      title: "Collection",
       value: formatCurrency(stats.totalBudget ?? 0),
       icon: DollarSign,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",
-    },
-    {
-      title: "Pending",
-      value: stats.pending,
-      icon: Clock,
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-50",
     },
     {
       title: "Approved",
@@ -51,6 +44,13 @@ export function StatsCards({ stats, mode = "member" }: StatsCardsProps) {
       icon: CheckCircle,
       color: "text-green-600",
       bgColor: "bg-green-50",
+    },
+    {
+      title: "Pending",
+      value: stats.pending,
+      icon: Clock,
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-50",
     },
     {
       title: "Rejected",
@@ -62,7 +62,7 @@ export function StatsCards({ stats, mode = "member" }: StatsCardsProps) {
     {
       title: "Paid",
       value: stats.paid ?? 0,
-      icon: CheckCircle,
+      icon: DollarSign,
       color: "text-teal-600",
       bgColor: "bg-teal-50",
     },
@@ -121,7 +121,7 @@ export function StatsCards({ stats, mode = "member" }: StatsCardsProps) {
   ]
 
   const cards = mode === "admin" ? adminCards : memberCards
-  const gridClass = mode === "admin" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4"
+  const gridClass = mode === "admin" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"
 
   return (
     <div className={gridClass}>

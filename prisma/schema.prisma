@@ -8,24 +8,8 @@ datasource db {
 
 enum Role {
   ADMIN
+  SUPERVISOR
   MEMBER
-}
-
-enum ExpenseCategory {
-  FREIGHT
-  PORTER
-  FOOD
-  OFFICE_GOODS
-  HOTEL
-  PETROL
-  DIESEL
-  OTHER
-  TRAVEL
-  TRANSPORTATION
-  ACCOMMODATION
-  OFFICE_SUPPLIES
-  COMMUNICATION
-  ENTERTAINMENT
 }
 
 enum ExpenseStatus {
@@ -42,6 +26,7 @@ model User {
   password     String
   role         Role      @default(MEMBER)
   totalBudget  Float     @default(5000)
+  receivedAmount Float   @default(0)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   expenses     Expense[]
@@ -54,7 +39,7 @@ model Expense {
   description  String?
   amount       Float
   editCount    Int      @default(0)
-  category     ExpenseCategory
+  category     String
   status       ExpenseStatus   @default(PENDING)
   adminRemark  String?
   createdAt    DateTime @default(now())
@@ -81,4 +66,12 @@ model Fund {
   updatedAt     DateTime    @updatedAt
   userId        String
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

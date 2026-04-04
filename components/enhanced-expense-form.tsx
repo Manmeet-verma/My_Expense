@@ -17,29 +17,18 @@ interface EnhancedExpenseFormProps {
   memberName: string
   budget: number
   totalAmountUsed: number
+  categories: Array<{
+    id: string
+    name: string
+    description: string | null
+  }>
   onSuccess?: () => void
 }
-
-const CATEGORIES = [
-  { value: "FREIGHT", label: "Freight/Gaddi" },
-  { value: "PORTER", label: "Porter" },
-  { value: "FOOD", label: "Food" },
-  { value: "OFFICE_GOODS", label: "Office Goods" },
-  { value: "HOTEL", label: "Hotel" },
-  { value: "PETROL", label: "Petrol" },
-  { value: "DIESEL", label: "Diesel" },
-] as const
-
-const OFFICE_GOODS_SUB = [
-  { value: "IRON", label: "Iron" },
-  { value: "WELDING", label: "Welding" },
-  { value: "OTHER", label: "Other" },
-] as const
-
 export function EnhancedExpenseForm({ 
   memberName,
   budget,
   totalAmountUsed,
+  categories,
   onSuccess 
 }: EnhancedExpenseFormProps) {
   const router = useRouter()
@@ -47,7 +36,7 @@ export function EnhancedExpenseForm({
   const [error, setError] = useState("")
   const [expenseAmount, setExpenseAmount] = useState(0)
   const [liveTotalAmountUsed, setLiveTotalAmountUsed] = useState(totalAmountUsed)
-  const [selectedCategory, setSelectedCategory] = useState<string>("FREIGHT")
+  const [selectedCategory, setSelectedCategory] = useState<string>(categories[0]?.name || "")
 
   function normalizeOptionalString(value: FormDataEntryValue | null) {
     if (typeof value !== "string") return undefined
@@ -70,7 +59,7 @@ export function EnhancedExpenseForm({
       title: normalizeOptionalString(formData.get("title")),
       description: normalizeOptionalString(formData.get("description")),
       amount: parseFloat(formData.get("amount") as string),
-      category: formData.get("category") as "FREIGHT" | "PORTER" | "FOOD" | "OFFICE_GOODS" | "HOTEL" | "PETROL" | "DIESEL" | "OTHER",
+      category: formData.get("category") as string,
     }
     const createdAmount = data.amount
 
@@ -113,34 +102,15 @@ export function EnhancedExpenseForm({
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 required
-                className="h-7 text-xs"
+                className="h-10 w-full text-sm"
               >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.name}>
+                    {cat.name}
                   </option>
                 ))}
               </Select>
             </div>
-
-            {selectedCategory === "OFFICE_GOODS" && (
-              <div className="space-y-1">
-                <Label htmlFor="subCategory" className="text-xs">Sub Category *</Label>
-                <Select 
-                  id="subCategory" 
-                  name="subCategory" 
-                  defaultValue="IRON"
-                  required
-                  className="h-7 text-xs"
-                >
-                  {OFFICE_GOODS_SUB.map((sub) => (
-                    <option key={sub.value} value={sub.value}>
-                      {sub.label}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-            )}
 
           <div className="space-y-1">
             <Label htmlFor="description" className="text-xs">Description</Label>

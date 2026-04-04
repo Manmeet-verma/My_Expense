@@ -6,7 +6,11 @@ export default async function Home() {
     const session = await auth()
 
     if (session?.user) {
-      redirect(session.user.role === "ADMIN" ? "/admin" : "/dashboard")
+      if (session.user.role === "ADMIN" || session.user.role === "SUPERVISOR") {
+        redirect("/admin")
+      } else {
+        redirect("/dashboard")
+      }
     } else {
       redirect("/login")
     }

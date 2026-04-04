@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { deleteMember } from "@/actions/delete-member"
+import { deleteMember } from "@/actions/auth"
 import { approveOrRejectExpense } from "@/actions/expense"
 
 interface MemberRow {
@@ -19,6 +19,7 @@ interface MemberRow {
 
 interface MembersContentProps {
   members?: MemberRow[]
+  canManage?: boolean
 }
 
 interface MemberExpense {
@@ -33,7 +34,7 @@ interface MemberExpense {
 
 type ExpenseView = "approved" | "rejected" | "pending"
 
-export default function MembersContent({ members: initialMembers }: MembersContentProps) {
+export default function MembersContent({ members: initialMembers, canManage = false }: MembersContentProps) {
   const router = useRouter()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null)
@@ -49,6 +50,10 @@ export default function MembersContent({ members: initialMembers }: MembersConte
   const members = useMemo(() => initialMembers ?? [], [initialMembers])
 
   async function handleDelete(memberId: string) {
+    if (!canManage) {
+      return
+    }
+
     try {
       if (deletingId) return
       
@@ -165,7 +170,9 @@ export default function MembersContent({ members: initialMembers }: MembersConte
       <div>
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Member List</h1>
-          <p className="mt-1 text-gray-600">Admin access only: manage member accounts</p>
+          <p className="mt-1 text-gray-600">
+            {canManage ? "Admin access: manage member accounts" : "Supervisor access: view member accounts"}
+          </p>
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-white">
@@ -204,15 +211,19 @@ export default function MembersContent({ members: initialMembers }: MembersConte
                       <td className="px-4 py-3 text-gray-700">{member.totalEdits}</td>
                       <td className="px-4 py-3 text-gray-700">{formatDate(member.createdAt)}</td>
                       <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => handleDelete(member.id)}
-                            disabled={deletingId === member.id}
-                            className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
-                          >
-                            {deletingId === member.id ? "Deleting..." : "Delete"}
-                          </button>
-                        </div>
+                        {canManage ? (
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => handleDelete(member.id)}
+                              disabled={deletingId === member.id}
+                              className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
+                            >
+                              {deletingId === member.id ? "Deleting..." : "Delete"}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-500">View only</span>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -250,13 +261,19 @@ export default function MembersContent({ members: initialMembers }: MembersConte
                       <p className="font-medium text-gray-900">{formatDate(member.createdAt)}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(member.id)}
-                    disabled={deletingId === member.id}
-                    className="w-full mt-2 py-2 text-sm text-red-600 border border-red-200 rounded hover:bg-red-50 disabled:opacity-50"
-                  >
-                    {deletingId === member.id ? "Deleting..." : "Delete Member"}
-                  </button>
+                  {canManage ? (
+                    <button
+                      onClick={() => handleDelete(member.id)}
+                      disabled={deletingId === member.id}
+                      className="w-full mt-2 py-2 text-sm text-red-600 border border-red-200 rounded hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {deletingId === member.id ? "Deleting..." : "Delete Member"}
+                    </button>
+                  ) : (
+                    <p className="w-full mt-2 py-2 text-center text-xs text-gray-500 border border-gray-200 rounded">
+                      View only
+                    </p>
+                  )}
                 </div>
               ))
             )}

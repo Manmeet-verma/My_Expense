@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getExpenseStats } from "@/actions/expense"
+import { getCategories } from "@/actions/category"
 import { EnhancedExpenseForm } from "@/components/enhanced-expense-form"
 
 export default async function ExpenseEntryPage() {
@@ -10,11 +11,12 @@ export default async function ExpenseEntryPage() {
     redirect("/login")
   }
 
-  if (session.user.role === "ADMIN") {
+  if (session.user.role === "ADMIN" || session.user.role === "SUPERVISOR") {
     redirect("/admin")
   }
 
   const stats = await getExpenseStats()
+  const categories = await getCategories()
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -30,6 +32,7 @@ export default async function ExpenseEntryPage() {
               memberName={session.user.name || "Member"}
               budget={stats.totalBudget || 0}
               totalAmountUsed={stats.submittedAmount || 0}
+              categories={categories}
             />
           </div>
         )}

@@ -2,17 +2,17 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { publicSignup } from "@/actions/auth"
+import { createSupervisor } from "@/actions/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import Link from "next/link"
 import { Eye, EyeOff } from "lucide-react"
 
-export function SignupForm() {
+export function CreateSupervisorForm() {
   const router = useRouter()
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
@@ -20,6 +20,7 @@ export function SignupForm() {
     e.preventDefault()
     setLoading(true)
     setError("")
+    setSuccess("")
 
     const form = e.currentTarget
     const formData = new FormData(form)
@@ -29,23 +30,25 @@ export function SignupForm() {
       password: formData.get("password") as string,
     }
 
-    const result = await publicSignup(data)
+    const result = await createSupervisor(data)
 
     if (result?.error) {
       setError(result.error)
       setLoading(false)
-    } else {
-      setError("")
-      alert("Account created successfully! Please sign in.")
-      router.push("/login")
+      return
     }
+
+    form.reset()
+    setSuccess("Supervisor account created successfully")
+    setLoading(false)
+    router.refresh()
   }
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-        <CardDescription>Create a member account</CardDescription>
+        <CardTitle className="text-2xl font-bold">Create Supervisor Account</CardTitle>
+        <CardDescription>Admin only: create a supervisor login account</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-4">
@@ -54,31 +57,36 @@ export function SignupForm() {
               {error}
             </div>
           )}
+          {success && (
+            <div className="bg-green-50 text-green-700 text-sm p-3 rounded-lg">
+              {success}
+            </div>
+          )}
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="supervisor-name">Full Name</Label>
             <Input
-              id="name"
+              id="supervisor-name"
               name="name"
               type="text"
-              placeholder="John Doe"
+              placeholder="Supervisor Name"
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="supervisor-email">Email</Label>
             <Input
-              id="email"
+              id="supervisor-email"
               name="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder="supervisor@example.com"
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="supervisor-password">Password</Label>
             <div className="relative">
               <Input
-                id="password"
+                id="supervisor-password"
                 name="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
@@ -95,18 +103,10 @@ export function SignupForm() {
               </button>
             </div>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Create Account"}
+            {loading ? "Creating account..." : "Create Supervisor"}
           </Button>
-          <p className="text-sm text-center text-gray-600">
-            Already have an account?{" "}
-            <Link href="/login" className="text-blue-600 hover:underline font-medium">
-              Sign In
-            </Link>
-          </p>
-        </CardFooter>
+        </CardContent>
       </form>
     </Card>
   )

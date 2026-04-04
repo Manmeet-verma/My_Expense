@@ -28,6 +28,24 @@ interface Fund {
 
 type TabType = "all" | "approved" | "rejected" | "pending" | "collection"
 
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+function getCurrentMonthDateRange() {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), 1)
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+  return {
+    from: toDateInputValue(start),
+    to: toDateInputValue(end),
+  }
+}
+
 function formatCategory(category: string): string {
   if (category === "OFFICE_GOODS") return "Office Goods"
   if (category === "FREIGHT") return "Freight/Gaddi"
@@ -35,8 +53,9 @@ function formatCategory(category: string): string {
 }
 
 export function StatementClient({ userId }: { userId: string }) {
-  const [fromDate, setFromDate] = useState("")
-  const [toDate, setToDate] = useState("")
+  const defaultRange = getCurrentMonthDateRange()
+  const [fromDate, setFromDate] = useState(defaultRange.from)
+  const [toDate, setToDate] = useState(defaultRange.to)
   const [searchTerm, setSearchTerm] = useState("")
   const [approvedExpenses, setApprovedExpenses] = useState<Expense[]>([])
   const [rejectedExpenses, setRejectedExpenses] = useState<Expense[]>([])

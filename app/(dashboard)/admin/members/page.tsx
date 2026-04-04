@@ -27,7 +27,7 @@ export default async function AdminMembersPage() {
     redirect("/login")
   }
 
-  if (session.user.role !== "ADMIN") {
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR") {
     redirect("/dashboard")
   }
 
@@ -40,5 +40,5 @@ export default async function AdminMembersPage() {
     members = []
   }
 
-  return <MembersContent members={members} />
+  return <MembersContent members={members} canManage />
 }

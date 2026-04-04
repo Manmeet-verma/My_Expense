@@ -32,8 +32,53 @@ async function main() {
     },
   })
 
+  // Create supervisor user
+  const supervisorPassword = await hash('supervisor123', 12)
+  await prisma.user.upsert({
+    where: { email: 'supervisor@example.com' },
+    update: {
+      name: 'Supervisor User',
+      password: supervisorPassword,
+      role: 'SUPERVISOR',
+    },
+    create: {
+      email: 'supervisor@example.com',
+      name: 'Supervisor User',
+      password: supervisorPassword,
+      role: 'SUPERVISOR',
+    },
+  })
+
+  const defaultCategories = [
+    { name: 'Freight/Gaddi', description: 'Freight/Gaddi expenses' },
+    { name: 'Porter', description: 'Porter expenses' },
+    { name: 'Food', description: 'Food and meals' },
+    { name: 'Office Goods', description: 'Office goods and supplies' },
+    { name: 'Hotel', description: 'Hotel and stay expenses' },
+    { name: 'Fuel', description: 'Fuel expenses' },
+  ]
+
+  for (const category of defaultCategories) {
+    await prisma.category.upsert({
+      where: { name: category.name },
+      update: { description: category.description },
+      create: category,
+    })
+  }
+
   console.log('Seed completed!')
-  console.log('Admin user: admin@example.com / admin123')
+  console.log('')
+  console.log('Demo Accounts Created:')
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  console.log('Admin Account:')
+  console.log('  Email: admin@example.com')
+  console.log('  Password: admin123')
+  console.log('')
+  console.log('Supervisor Account:')
+  console.log('  Email: supervisor@example.com')
+  console.log('  Password: supervisor123')
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  console.log('Default Categories Seeded: 6')
 
 }
 

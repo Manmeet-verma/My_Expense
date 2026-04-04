@@ -4,12 +4,10 @@ import { redirect } from "next/navigation"
 import { getAllExpenses } from "@/actions/expense"
 
 import { approveOrRejectExpense, markExpensePaid } from "@/actions/expense"
-import { getAdmins } from "@/actions/auth"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { KeyRound } from "lucide-react"
-import { AdminSection } from "@/components/forms/admin-section"
 
 type Expense = Awaited<ReturnType<typeof getAllExpenses>>[number]
 
@@ -41,20 +39,13 @@ export default async function AdminPage() {
     redirect("/login")
   }
 
-  if (session.user.role !== "ADMIN") {
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR") {
     redirect("/dashboard")
   }
 
   let expenses: Expense[] = []
-  let admins: Awaited<ReturnType<typeof getAdmins>> = []
-
   try {
-    const results = await Promise.all([
-      getAllExpenses(),
-      getAdmins(),
-    ])
-    expenses = results[0] as Expense[]
-    admins = results[1]
+    expenses = await getAllExpenses()
   } catch (error) {
     console.error("Admin page data error:", error)
   }
@@ -92,23 +83,13 @@ export default async function AdminPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Expense Review</h1>
         <p className="text-gray-600 mt-1">Review and manage expense approvals</p>
-      </div>
-
-      <div className="mt-8">
-        <AdminSection admins={admins} currentAdminId={session.user.id} />
       </div>
 
       <div className="mt-8 flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-gray-900">Member Accounts</h2>
         <div className="flex items-center gap-2">
-          <Link href="/admin/verify-members" className={buttonVariants({ variant: "outline" })}>
-            <span className="inline-flex items-center gap-2">
-              <KeyRound className="h-4 w-4" />
-              Verify Passwords
-            </span>
-          </Link>
           <Link href="/admin/reset-password" className={buttonVariants({ variant: "outline" })}>
             <span className="inline-flex items-center gap-2">
               <KeyRound className="h-4 w-4" />
@@ -280,6 +261,7 @@ export default async function AdminPage() {
           </table>
         </div>
       </div>
+
     </div>
   )
 }

@@ -6,13 +6,13 @@ import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, LogOut, Users, Wallet, PanelRight, PanelLeft, FileText, List } from "lucide-react"
+import { LayoutDashboard, LogOut, Users, Wallet, PanelLeft, FileText, List, UserPlus, Tags } from "lucide-react"
 
 interface NavProps {
   user: {
     name: string | null
     email: string
-    role: "ADMIN" | "MEMBER"
+    role: "ADMIN" | "SUPERVISOR" | "MEMBER"
   }
 }
 
@@ -20,36 +20,68 @@ export function Navigation({ user }: NavProps) {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const isAdmin = user.role === "ADMIN"
+  const isSupervisor = user.role === "SUPERVISOR"
+  const isAdminOrSupervisor = isAdmin || isSupervisor
 
   const navItems = [
     {
       href: "/dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
-      visible: true,
+      visible: user.role === "MEMBER",
     },
     {
       href: "/dashboard/expense-entry",
       label: "Add Expense",
       icon: LayoutDashboard,
-      visible: !isAdmin,
+      visible: user.role === "MEMBER",
     },
     {
       href: "/dashboard/my-fund",
       label: "Add Collection",
       icon: Wallet,
-      visible: !isAdmin,
+      visible: user.role === "MEMBER",
     },
     {
       href: "/dashboard/statement",
       label: "Statement",
       icon: FileText,
-      visible: !isAdmin,
+      visible: user.role === "MEMBER",
+    },
+    {
+      href: "/admin/dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      visible: isAdmin,
+    },
+    {
+      href: "/admin",
+      label: "Expense Review",
+      icon: Users,
+      visible: isAdminOrSupervisor,
     },
     {
       href: "/admin/members",
       label: "Members",
       icon: Users,
+      visible: isAdminOrSupervisor,
+    },
+    {
+      href: "/admin/create-supervisor",
+      label: "Create Supervisor",
+      icon: UserPlus,
+      visible: isAdmin,
+    },
+    {
+      href: "/admin/fund-distribution",
+      label: "Give Money",
+      icon: Wallet,
+      visible: user.role === "ADMIN",
+    },
+    {
+      href: "/admin/add-category",
+      label: "Add Category",
+      icon: Tags,
       visible: isAdmin,
     },
   ]
@@ -73,14 +105,16 @@ export function Navigation({ user }: NavProps) {
           <div className="flex justify-between h-16">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
               <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleSidebar}
-                  className="h-8 w-8 p-0"
-                >
-                  <PanelLeft className="w-4 h-4" />
-                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleSidebar}
+                    className="h-8 w-8 p-0"
+                  >
+                    <PanelLeft className="w-4 h-4" />
+                  </Button>
+                )}
                 <Link href="/dashboard" className="flex items-center gap-2">
                   <span className="font-bold text-base sm:text-xl text-gray-900">My Expense</span>
                 </Link>

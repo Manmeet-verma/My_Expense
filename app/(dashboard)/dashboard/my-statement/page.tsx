@@ -10,7 +10,7 @@ export default async function MyStatementPage() {
     redirect("/login")
   }
 
-  if (session.user.role === "ADMIN") {
+  if (session.user.role === "ADMIN" || session.user.role === "SUPERVISOR") {
     redirect("/admin")
   }
 

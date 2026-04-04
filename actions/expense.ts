@@ -14,7 +14,7 @@ const expenseSchema = z.object({
   title: optionalStringSchema,
   description: optionalStringSchema,
   amount: z.number().positive("Amount must be positive"),
-  category: z.enum(["FREIGHT", "PORTER", "FOOD", "OFFICE_GOODS", "HOTEL", "PETROL", "DIESEL", "OTHER"]),
+  category: z.string().min(1, "Category is required"),
 })
 
 const approvalSchema = z.object({
@@ -46,20 +46,9 @@ export async function createExpense(data: z.infer<typeof expenseSchema>) {
 
   const { title, description, amount, category } = result.data
 
-  const categoryLabels: Record<string, string> = {
-    FREIGHT: "Freight/Gaddi",
-    PORTER: "Porter",
-    FOOD: "Food",
-    OFFICE_GOODS: "Office Goods",
-    HOTEL: "Hotel",
-    PETROL: "Petrol",
-    DIESEL: "Diesel",
-    OTHER: "Other",
-  }
-
   await prisma.expense.create({
     data: {
-      title: title || categoryLabels[category] || "Expense",
+      title: title || category,
       description,
       amount,
       category,
@@ -91,7 +80,7 @@ export async function getMyExpenses() {
 export async function getAllExpenses() {
   const session = await auth()
   
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
     return []
   }
 
@@ -205,8 +194,8 @@ export async function deleteExpense(id: string) {
 export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema>) {
   const session = await auth()
   
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return { error: "Unauthorized - Admin access required" }
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
+    return { error: "Unauthorized - Admin or Supervisor access required" }
   }
 
   const result = approvalSchema.safeParse(data)
@@ -253,8 +242,8 @@ export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema
 export async function markExpensePaid(data: z.infer<typeof paymentSchema>) {
   const session = await auth()
 
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return { error: "Unauthorized - Admin access required" }
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
+    return { error: "Unauthorized - Admin or Supervisor access required" }
   }
 
   const result = paymentSchema.safeParse(data)
@@ -481,5 +470,66 @@ export async function getMyFunds() {
   return await prisma.fund.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
+  })
+}
+
+const distributeFundSchema = z.object({
+  memberId: z.string().min(1, "Member ID is required"),
+  amount: z.number().positive("Amount must be positive"),
+})
+
+export async function distributeFund(data: z.infer<typeof distributeFundSchema>) {
+  const session = await auth()
+  
+  if (!session?.user) {
+    return { error: "Unauthorized" }
+  }
+
+  if (session.user.role !== "ADMIN") {
+    return { error: "Only admins can distribute funds" }
+  }
+
+  const result = distributeFundSchema.safeParse(data)
+
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { memberId, amount } = result.data
+
+  await prisma.user.update({
+    where: { id: memberId },
+    data: {
+      receivedAmount: {
+        increment: amount,
+      },
+    },
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/admin/fund-distribution")
+  return { success: true }
+}
+
+export async function getAllMembers() {
+  const session = await auth()
+  
+  if (!session?.user) {
+    return []
+  }
+
+  if (session.user.role !== "ADMIN") {
+    return []
+  }
+
+  return await prisma.user.findMany({
+    where: { role: "MEMBER" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      receivedAmount: true,
+    },
+    orderBy: { name: "asc" },
   })
 }

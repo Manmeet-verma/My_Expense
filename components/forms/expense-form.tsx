@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { ExpenseCategory } from "@/lib/types"
 
 interface ExpenseFormProps {
   expense?: {
@@ -16,23 +15,17 @@ interface ExpenseFormProps {
     title: string
     description: string | null
     amount: number
-    category: ExpenseCategory
+    category: string
   }
+  categories?: Array<{
+    id: string
+    name: string
+    description: string | null
+  }>
   onSuccess?: () => void
 }
 
-const categories = [
-  { value: "FREIGHT", label: "Freight/Gaddi" },
-  { value: "PORTER", label: "Porter" },
-  { value: "FOOD", label: "Food" },
-  { value: "OFFICE_GOODS", label: "Office Goods" },
-  { value: "HOTEL", label: "Hotel" },
-  { value: "PETROL", label: "Petrol" },
-  { value: "DIESEL", label: "Diesel" },
-  { value: "OTHER", label: "Other" },
-] as const
-
-export function ExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
+export function ExpenseForm({ expense, categories = [], onSuccess }: ExpenseFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -52,7 +45,7 @@ export function ExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
       title: normalizeOptionalString(formData.get("title")),
       description: normalizeOptionalString(formData.get("description")),
       amount: parseFloat(formData.get("amount") as string),
-      category: formData.get("category") as ExpenseCategory,
+      category: formData.get("category") as string,
     }
 
     let result
@@ -122,8 +115,8 @@ export function ExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
               defaultValue={expense?.category || "OTHER"}
             >
               {categories.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
+                <option key={cat.id} value={cat.name}>
+                  {cat.name}
                 </option>
               ))}
             </Select>

@@ -40,6 +40,12 @@ const createAdminSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 })
 
+const createSupervisorSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+})
+
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(6, "Current password is required"),
   newPassword: z.string().min(6, "New password must be at least 6 characters"),
@@ -62,6 +68,10 @@ const deleteAdminSchema = z.object({
   adminId: z.string().min(1, "Admin ID is required"),
 })
 
+const deleteSupervisorSchema = z.object({
+  supervisorId: z.string().min(1, "Supervisor ID is required"),
+})
+
 const adminForgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
   newPassword: z.string().min(6, "New password must be at least 6 characters"),
@@ -77,7 +87,6 @@ const publicSignupSchema = z.object({
   email: z.string().email("Invalid email address"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["ADMIN", "MEMBER"]),
 })
 
 const verifyMemberPasswordSchema = z.object({
@@ -120,6 +129,7 @@ export async function signup(data: z.infer<typeof signupSchema>) {
 
   revalidatePath("/login")
   revalidatePath("/admin")
+  revalidatePath("/admin/dashboard")
   return { success: true }
 }
 
@@ -130,7 +140,7 @@ export async function publicSignup(data: z.infer<typeof publicSignupSchema>) {
     return { error: result.error.issues[0].message }
   }
 
-  const { email, name, password, role } = result.data
+  const { email, name, password } = result.data
   const normalizedEmail = email.trim().toLowerCase()
 
   const existingUser = await prisma.user.findUnique({
@@ -148,7 +158,7 @@ export async function publicSignup(data: z.infer<typeof publicSignupSchema>) {
       email: normalizedEmail,
       name,
       password: hashedPassword,
-      role,
+      role: "MEMBER",
     },
   })
 
@@ -196,6 +206,48 @@ export async function createAdmin(data: z.infer<typeof createAdminSchema>) {
   return { success: true }
 }
 
+export async function createSupervisor(data: z.infer<typeof createSupervisorSchema>) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can create supervisor accounts" }
+  }
+
+  const result = createSupervisorSchema.safeParse(data)
+
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { email, name, password } = result.data
+  const normalizedEmail = email.trim().toLowerCase()
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+  })
+
+  if (existingUser) {
+    return { error: "Email already registered" }
+  }
+
+  const hashedPassword = await hashPassword(password)
+
+  await prisma.user.create({
+    data: {
+      email: normalizedEmail,
+      name,
+      password: hashedPassword,
+      role: "SUPERVISOR",
+    },
+  })
+
+  revalidatePath("/login")
+  revalidatePath("/admin")
+  revalidatePath("/admin/members")
+  revalidatePath("/admin/create-supervisor")
+  return { success: true }
+}
+
 export async function changeMyPassword(data: z.infer<typeof changePasswordSchema>) {
   const session = await auth()
 
@@ -239,6 +291,7 @@ export async function changeMyPassword(data: z.infer<typeof changePasswordSchema
 
   revalidatePath("/dashboard")
   revalidatePath("/admin")
+  revalidatePath("/admin/dashboard")
 
   return { success: true }
 }
@@ -355,7 +408,7 @@ export async function verifyMemberPassword(
 export async function getMembers() {
   const session = await auth()
 
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
     return []
   }
 
@@ -409,6 +462,25 @@ export async function getAdmins() {
   })
 }
 
+export async function getSupervisors() {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return []
+  }
+
+  return prisma.user.findMany({
+    where: { role: "SUPERVISOR" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "asc" },
+  })
+}
+
 export async function deleteAdmin(data: z.infer<typeof deleteAdminSchema>) {
   const session = await auth()
 
@@ -449,11 +521,49 @@ export async function deleteAdmin(data: z.infer<typeof deleteAdminSchema>) {
   return { success: true }
 }
 
-export async function deleteMember(data: z.infer<typeof deleteMemberSchema>) {
+export async function deleteSupervisor(data: z.infer<typeof deleteSupervisorSchema>) {
   const session = await auth()
 
   if (!session?.user || session.user.role !== "ADMIN") {
-    return { error: "Only admins can delete member accounts" }
+    return { error: "Only admins can delete supervisor accounts" }
+  }
+
+  const result = deleteSupervisorSchema.safeParse(data)
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { supervisorId } = result.data
+
+  const user = await prisma.user.findUnique({
+    where: { id: supervisorId },
+    select: { id: true, role: true },
+  })
+
+  if (!user) {
+    return { error: "Supervisor not found" }
+  }
+
+  if (user.role !== "SUPERVISOR") {
+    return { error: "Only supervisor accounts can be deleted" }
+  }
+
+  await prisma.user.delete({
+    where: { id: supervisorId },
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/admin/members")
+  revalidatePath("/admin/create-supervisor")
+
+  return { success: true }
+}
+
+export async function deleteMember(data: z.infer<typeof deleteMemberSchema>) {
+  const session = await auth()
+
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
+    return { error: "Only admins or supervisors can delete member accounts" }
   }
 
   const result = deleteMemberSchema.safeParse(data)
