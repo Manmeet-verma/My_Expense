@@ -33,7 +33,7 @@ export function MemberPasswordCard({ member }: { member: MemberRow }) {
       setStatus(result)
     } catch {
       setStatus({ error: 'Failed to check password' })
-    } finally {
+    } finally { 
       setLoading(false)
     }
   }, [member.id])
