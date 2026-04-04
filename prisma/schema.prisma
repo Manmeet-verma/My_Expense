@@ -25,7 +25,7 @@ model User {
   name         String?
   password     String
   role         Role      @default(MEMBER)
-  totalBudget  Float     @default(5000)
+  totalBudget  Float     @default(0)
   receivedAmount Float   @default(0)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
