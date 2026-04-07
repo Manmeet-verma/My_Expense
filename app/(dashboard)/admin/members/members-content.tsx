@@ -26,6 +26,7 @@ interface MembersContentProps {
 interface MemberExpense {
   id: string
   title: string
+  description: string | null
   amount: number
   category: string
   status: "APPROVED" | "REJECTED" | "PENDING"
@@ -362,6 +363,7 @@ export default function MembersContent({
                     <tr>
                       {activeView === "pending" && canApproveExpenses && <th className="px-3 py-2 font-semibold">Select</th>}
                       <th className="px-3 py-2 font-semibold">Title</th>
+                      <th className="px-3 py-2 font-semibold">Description</th>
                       <th className="px-3 py-2 font-semibold">Category</th>
                       <th className="px-3 py-2 font-semibold">Amount</th>
                       <th className="px-3 py-2 font-semibold">Date</th>
@@ -382,6 +384,7 @@ export default function MembersContent({
                           </td>
                         )}
                         <td className="px-3 py-2 text-gray-900">{expense.title}</td>
+                        <td className="px-3 py-2 text-gray-700">{expense.description || "-"}</td>
                         <td className="px-3 py-2 text-gray-700">{expense.category}</td>
                         <td className="px-3 py-2 text-gray-900">{formatCurrency(expense.amount)}</td>
                         <td className="px-3 py-2 text-gray-700">{formatDate(expense.createdAt)}</td>

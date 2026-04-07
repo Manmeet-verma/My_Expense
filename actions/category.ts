@@ -26,6 +26,10 @@ type CategoryUsageRow = {
   memberIds: Set<string>
 }
 
+const categoryMembersSchema = z.object({
+  categoryName: z.string().min(1, "Category name is required"),
+})
+
 const DEFAULT_CATEGORY_NAMES = [
   "Freight/Gaddi",
   "Porter",
@@ -208,4 +212,62 @@ export async function getCategoryStatistics(): Promise<Array<CategoryRow & { exp
       memberCount: usage.memberIds.size,
     }
   })
+}
+
+export async function getCategoryMemberExpenses(data: z.infer<typeof categoryMembersSchema>) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can view category member expenses", data: [] as Array<{
+      id: string
+      memberName: string
+      description: string | null
+      amount: number
+      createdAt: Date
+    }> }
+  }
+
+  const result = categoryMembersSchema.safeParse(data)
+
+  if (!result.success) {
+    return { error: result.error.issues[0].message, data: [] }
+  }
+
+  const normalizedCategory = normalizeCategoryName(result.data.categoryName)
+
+  const expenses = await prisma.expense.findMany({
+    where: {
+      createdBy: {
+        role: "MEMBER",
+      },
+    },
+    select: {
+      id: true,
+      category: true,
+      description: true,
+      amount: true,
+      createdAt: true,
+      createdBy: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  })
+
+  const filtered = expenses
+    .filter((expense) => normalizeCategoryName(expense.category) === normalizedCategory)
+    .map((expense) => ({
+      id: expense.id,
+      memberName: expense.createdBy.name || expense.createdBy.email,
+      description: expense.description,
+      amount: expense.amount,
+      createdAt: expense.createdAt,
+    }))
+
+  return { success: true, data: filtered }
 }

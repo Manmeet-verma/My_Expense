@@ -32,6 +32,7 @@ export async function GET(_request: Request, context: RouteContext) {
     select: {
       id: true,
       title: true,
+      description: true,
       amount: true,
       category: true,
       status: true,

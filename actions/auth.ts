@@ -517,6 +517,7 @@ export async function deleteAdmin(data: z.infer<typeof deleteAdminSchema>) {
   })
 
   revalidatePath("/admin")
+  revalidatePath("/admin/dashboard")
 
   return { success: true }
 }
@@ -553,6 +554,7 @@ export async function deleteSupervisor(data: z.infer<typeof deleteSupervisorSche
   })
 
   revalidatePath("/admin")
+  revalidatePath("/admin/dashboard")
   revalidatePath("/admin/members")
   revalidatePath("/admin/create-supervisor")
 

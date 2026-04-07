@@ -4,8 +4,8 @@ import { redirect } from "next/navigation"
 import { getAdmins } from "@/actions/auth"
 import { getCategoryStatistics } from "@/actions/category"
 import { AdminSection } from "@/components/forms/admin-section"
+import { AdminCategoryUsageSection } from "@/components/admin-category-usage-section"
 import { buttonVariants } from "@/components/ui/button"
-import { formatCurrency } from "@/lib/utils"
 
 export default async function AdminDashboardPage() {
   const session = await auth()
@@ -38,70 +38,7 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
 
-        <div className="hidden space-y-3">
-          {categories.length === 0 ? (
-            <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-gray-500">
-              No categories added yet
-            </div>
-          ) : (
-            categories.map((category) => (
-              <div key={category.id} className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
-                <div>
-                  <p className="font-semibold text-gray-900">{category.name}</p>
-                  <p className="text-sm text-gray-600">{category.description || "No description"}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-gray-500">Members Used</p>
-                    <p className="font-medium text-gray-900">{category.memberCount}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Expense Count</p>
-                    <p className="font-medium text-gray-900">{category.expenseCount}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-gray-500">Total Expense</p>
-                    <p className="font-medium text-gray-900">{formatCurrency(category.totalAmount)}</p>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-[760px] w-full text-xs sm:text-sm">
-            <thead className="bg-gray-50 text-left text-gray-600">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Category</th>
-                <th className="px-4 py-3 font-semibold">Description</th>
-                <th className="px-4 py-3 font-semibold">Members Used</th>
-                <th className="px-4 py-3 font-semibold">Expense Count</th>
-                <th className="px-4 py-3 font-semibold">Total Expense</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
-                    No categories added yet
-                  </td>
-                </tr>
-              ) : (
-                categories.map((category) => (
-                  <tr key={category.id} className="border-t border-gray-100">
-                    <td className="px-4 py-3 font-medium text-gray-900">{category.name}</td>
-                    <td className="px-4 py-3 text-gray-700">{category.description || "-"}</td>
-                    <td className="px-4 py-3 text-gray-700">{category.memberCount}</td>
-                    <td className="px-4 py-3 text-gray-700">{category.expenseCount}</td>
-                    <td className="px-4 py-3 text-gray-900">{formatCurrency(category.totalAmount)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <AdminCategoryUsageSection categories={categories} />
       </div>
     </div>
   )

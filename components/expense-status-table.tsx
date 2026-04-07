@@ -6,6 +6,7 @@ import { CheckCircle, XCircle } from "lucide-react"
 interface Expense {
   id: string
   title: string
+  description: string | null
   amount: number
   category: string
   status: "APPROVED" | "REJECTED"
@@ -39,6 +40,7 @@ export function ApprovedExpenseTable({ expenses }: ApprovedExpenseTableProps) {
             <tr>
               <th className="px-4 py-3 font-semibold text-green-800">Date</th>
               <th className="px-4 py-3 font-semibold text-green-800">Category</th>
+              <th className="px-4 py-3 font-semibold text-green-800">Description</th>
               <th className="px-4 py-3 font-semibold text-green-800">Total Expense</th>
               <th className="px-4 py-3 font-semibold text-green-800">Status</th>
             </tr>
@@ -48,6 +50,7 @@ export function ApprovedExpenseTable({ expenses }: ApprovedExpenseTableProps) {
               <tr key={expense.id} className="border-t border-gray-100">
                 <td className="px-4 py-3 text-gray-700">{formatDate(expense.createdAt)}</td>
                 <td className="px-4 py-3 text-gray-700">{formatCategory(expense.category)}</td>
+                <td className="px-4 py-3 text-gray-700">{expense.description || "-"}</td>
                 <td className="px-4 py-3 text-gray-900 font-medium">{formatCurrency(expense.amount)}</td>
                 <td className="px-4 py-3">
                   <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
@@ -75,6 +78,7 @@ export function ApprovedExpenseTable({ expenses }: ApprovedExpenseTableProps) {
               <span className="text-sm text-gray-600">{formatCategory(expense.category)}</span>
               <span className="font-medium text-gray-900">{formatCurrency(expense.amount)}</span>
             </div>
+            <p className="text-xs text-gray-600">{expense.description || "-"}</p>
           </div>
         ))}
       </div>
@@ -103,6 +107,7 @@ export function RejectedExpenseTable({ expenses }: RejectedExpenseTableProps) {
             <tr>
               <th className="px-4 py-3 font-semibold text-red-800">Date</th>
               <th className="px-4 py-3 font-semibold text-red-800">Category</th>
+              <th className="px-4 py-3 font-semibold text-red-800">Description</th>
               <th className="px-4 py-3 font-semibold text-red-800">Total Expense</th>
               <th className="px-4 py-3 font-semibold text-red-800">Status</th>
             </tr>
@@ -112,6 +117,7 @@ export function RejectedExpenseTable({ expenses }: RejectedExpenseTableProps) {
               <tr key={expense.id} className="border-t border-gray-100">
                 <td className="px-4 py-3 text-gray-700">{formatDate(expense.createdAt)}</td>
                 <td className="px-4 py-3 text-gray-700">{formatCategory(expense.category)}</td>
+                <td className="px-4 py-3 text-gray-700">{expense.description || "-"}</td>
                 <td className="px-4 py-3 text-gray-900 font-medium">{formatCurrency(expense.amount)}</td>
                 <td className="px-4 py-3">
                   <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
@@ -139,6 +145,7 @@ export function RejectedExpenseTable({ expenses }: RejectedExpenseTableProps) {
               <span className="text-sm text-gray-600">{formatCategory(expense.category)}</span>
               <span className="font-medium text-gray-900">{formatCurrency(expense.amount)}</span>
             </div>
+            <p className="text-xs text-gray-600">{expense.description || "-"}</p>
           </div>
         ))}
       </div>

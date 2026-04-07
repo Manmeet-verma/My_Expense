@@ -1,0 +1,21 @@
+﻿## main...origin/main
+ M actions/auth.ts
+ M actions/category.ts
+ M actions/expense.ts
+ M app/(dashboard)/admin/add-category/page.tsx
+ M app/(dashboard)/admin/dashboard/page.tsx
+ M app/(dashboard)/admin/fund-distribution/page.tsx
+ M app/(dashboard)/admin/members/members-content.tsx
+ M app/(dashboard)/admin/page.tsx
+ M app/api/expenses/member/[memberId]/route.ts
+ M components/admin-fund-distribution-form.tsx
+ M components/admin-statement-client.tsx
+ M components/expense-status-table.tsx
+ M components/forms/admin-section.tsx
+ M components/forms/supervisor-section.tsx
+ M components/my-statement-client.tsx
+ M components/statement-client.tsx
+ M components/stats-cards.tsx
+?? .git-status-check.txt
+?? components/admin-category-usage-section.tsx
+?? components/admin-distribution-transactions-table.tsx

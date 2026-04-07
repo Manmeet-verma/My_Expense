@@ -77,13 +77,42 @@ export function AdminSection({ admins, currentAdminId }: AdminSectionProps) {
 
       {admins.length > 0 && (
         <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-          <table className="min-w-full text-sm">
+          <div className="space-y-3 p-4 md:hidden">
+            {admins.map((admin) => (
+              <div key={admin.id} className="rounded-lg border border-gray-200 p-3">
+                <p className="text-sm font-semibold text-gray-900">
+                  {admin.name || "N/A"}
+                  {admin.id === currentAdminId && (
+                    <span className="ml-2 text-xs text-blue-600">(You)</span>
+                  )}
+                </p>
+                <p className="mt-1 text-sm text-gray-700">{admin.email}</p>
+                <p className="mt-1 text-xs text-gray-500">Created: {formatDate(admin.createdAt)}</p>
+
+                {admin.id !== currentAdminId && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(admin.id)}
+                    disabled={deletingId === admin.id}
+                    className="mt-3 w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    {deletingId === admin.id ? "Deleting..." : "Delete"}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <table className="hidden min-w-full text-sm md:table">
             <thead className="bg-gray-50 text-left text-gray-600">
               <tr>
                 <th className="px-4 py-3 font-semibold">Name</th>
                 <th className="px-4 py-3 font-semibold">Email</th>
                 <th className="px-4 py-3 font-semibold">Created</th>
-                <th className="px-4 py-3 font-semibold">Actions</th>
+                <th className="px-4 py-3 font-semibold">Delete</th>
               </tr>
             </thead>
             <tbody>
@@ -107,7 +136,8 @@ export function AdminSection({ admins, currentAdminId }: AdminSectionProps) {
                         disabled={deletingId === admin.id}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        {deletingId === admin.id ? "Deleting..." : "Delete"}
                       </Button>
                     )}
                   </td>

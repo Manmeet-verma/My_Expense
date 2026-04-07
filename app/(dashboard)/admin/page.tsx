@@ -137,6 +137,10 @@ export default async function AdminPage() {
                     <p className="text-gray-500">Date</p>
                     <p className="font-medium text-gray-900">{formatDate(expense.createdAt)}</p>
                   </div>
+                  <div className="col-span-2">
+                    <p className="text-gray-500">Description</p>
+                    <p className="font-medium text-gray-900">{expense.description || "-"}</p>
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -193,6 +197,7 @@ export default async function AdminPage() {
               <tr>
                 <th className="px-4 py-3 font-semibold">Member Name</th>
                 <th className="px-4 py-3 font-semibold">Category</th>
+                <th className="px-4 py-3 font-semibold">Description</th>
                 <th className="px-4 py-3 font-semibold">Amount</th>
                 <th className="px-4 py-3 font-semibold">Date</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
@@ -202,7 +207,7 @@ export default async function AdminPage() {
             <tbody>
               {expenses.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
+                  <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
                     No expenses submitted yet
                   </td>
                 </tr>
@@ -213,6 +218,7 @@ export default async function AdminPage() {
                       {expense.createdBy?.name || expense.createdBy?.email || "Unknown"}
                     </td>
                     <td className="px-4 py-3 text-gray-700">{formatCategory(expense.category)}</td>
+                    <td className="px-4 py-3 text-gray-700">{expense.description || "-"}</td>
                     <td className="px-4 py-3 text-gray-900">{formatCurrency(expense.amount)}</td>
                     <td className="px-4 py-3 text-gray-700">{formatDate(expense.createdAt)}</td>
                     <td className="px-4 py-3">

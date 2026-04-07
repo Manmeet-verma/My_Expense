@@ -25,7 +25,7 @@ export default async function AddCategoryPage() {
         <p className="mt-1 text-gray-600">Create and manage expense categories for your organization</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="space-y-6">
         <CreateCategorySection canCreate={canCreate} />
 
         <div className="rounded-lg border border-gray-200 bg-white">

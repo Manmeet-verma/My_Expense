@@ -19,6 +19,8 @@ export function FundDistributionForm() {
   const [members, setMembers] = useState<Member[]>([])
   const [selectedMember, setSelectedMember] = useState("")
   const [amount, setAmount] = useState("")
+  const [description, setDescription] = useState("")
+  const [paymentMode, setPaymentMode] = useState<"CASH" | "GPAY" | "BANK_ACCOUNT">("CASH")
 
   async function loadMembers() {
     const data = await getAllMembers()
@@ -43,6 +45,8 @@ export function FundDistributionForm() {
     const result = await distributeFund({
       memberId: selectedMember,
       amount: parseFloat(amount),
+      description,
+      paymentMode,
     })
 
     if (result.error) {
@@ -58,6 +62,8 @@ export function FundDistributionForm() {
       setSuccess(false)
       setSelectedMember("")
       setAmount("")
+      setDescription("")
+      setPaymentMode("CASH")
     }, 1500)
   }
 
@@ -118,6 +124,33 @@ export function FundDistributionForm() {
             className="pl-10"
           />
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Input
+          id="description"
+          type="text"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Optional note for this distribution"
+          className="mt-1"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="paymentMode">Payment Method *</Label>
+        <select
+          id="paymentMode"
+          value={paymentMode}
+          onChange={(e) => setPaymentMode(e.target.value as "CASH" | "GPAY" | "BANK_ACCOUNT")}
+          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+          required
+        >
+          <option value="CASH">Cash</option>
+          <option value="GPAY">GPay</option>
+          <option value="BANK_ACCOUNT">Bank Account</option>
+        </select>
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">

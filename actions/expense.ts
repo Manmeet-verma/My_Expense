@@ -299,6 +299,11 @@ export async function getExpenseStats() {
     _sum: { amount: true },
   })
 
+  const totalCollectionAmount = await prisma.fund.aggregate({
+    where: session.user.role === "ADMIN" ? {} : { userId: session.user.id },
+    _sum: { amount: true },
+  })
+
   // Get submitted expenses total (PENDING + APPROVED + REJECTED)
   const submittedAmount = await prisma.expense.aggregate({
     where,
@@ -326,6 +331,7 @@ export async function getExpenseStats() {
     paid,
     totalApprovedAmount: totalApprovedAmount._sum.amount || 0,
     totalPaidAmount: totalPaidAmount._sum.amount || 0,
+    collectionAmount: totalCollectionAmount._sum.amount || 0,
     totalBudget,
     submittedAmount: submittedTotal,
     remainingBudget,
@@ -468,9 +474,45 @@ export async function getMyFunds() {
 const distributeFundSchema = z.object({
   memberId: z.string().min(1, "Member ID is required"),
   amount: z.number().positive("Amount must be positive"),
+  description: optionalStringSchema,
+  paymentMode: z.enum(["CASH", "GPAY", "BANK_ACCOUNT"]),
+})
+
+const updateDistributedFundTransactionSchema = z.object({
+  transactionId: z.string().min(1, "Transaction ID is required"),
+  amount: z.number().positive("Amount must be positive"),
+  fundDate: z.string().min(1, "Fund date is required"),
+  description: optionalStringSchema,
+  paymentMode: z.enum(["CASH", "GPAY", "BANK_ACCOUNT"]),
+})
+
+const deleteDistributedFundTransactionSchema = z.object({
+  transactionId: z.string().min(1, "Transaction ID is required"),
 })
 
 const ADMIN_DISTRIBUTION_PREFIX = "Admin Distribution"
+
+function buildDistributionReceivedFrom(source: string, description?: string) {
+  const normalizedDescription = description?.trim()
+  return normalizedDescription ? `${source} | ${normalizedDescription}` : source
+}
+
+function getDistributionSource(receivedFrom: string) {
+  return receivedFrom.split("|")[0]?.trim() || receivedFrom
+}
+
+function parseDistributionDescription(receivedFrom: string) {
+  const description = receivedFrom.split("|").slice(1).join("|").trim()
+  return description || null
+}
+
+function revalidateDistributionPaths() {
+  revalidatePath("/admin")
+  revalidatePath("/admin/fund-distribution")
+  revalidatePath("/admin/dashboard")
+  revalidatePath("/dashboard/my-statement")
+  revalidatePath("/dashboard/statement")
+}
 
 export async function distributeFund(data: z.infer<typeof distributeFundSchema>) {
   const session = await auth()
@@ -489,7 +531,7 @@ export async function distributeFund(data: z.infer<typeof distributeFundSchema>)
     return { error: result.error.issues[0].message }
   }
 
-  const { memberId, amount } = result.data
+  const { memberId, amount, description, paymentMode } = result.data
 
   const member = await prisma.user.findFirst({
     where: {
@@ -506,7 +548,8 @@ export async function distributeFund(data: z.infer<typeof distributeFundSchema>)
   }
 
   const distributedBy = session.user.name || session.user.email
-  const receivedFrom = `${ADMIN_DISTRIBUTION_PREFIX}: ${distributedBy}`
+  const source = `${ADMIN_DISTRIBUTION_PREFIX}: ${distributedBy}`
+  const receivedFrom = buildDistributionReceivedFrom(source, description)
 
   await prisma.$transaction([
     prisma.user.update({
@@ -521,18 +564,140 @@ export async function distributeFund(data: z.infer<typeof distributeFundSchema>)
       data: {
         amount,
         receivedFrom,
-        paymentMode: "CASH",
+        paymentMode,
         fundDate: new Date(),
         userId: memberId,
       },
     }),
   ])
 
-  revalidatePath("/admin")
-  revalidatePath("/admin/fund-distribution")
-  revalidatePath("/admin/dashboard")
-  revalidatePath("/dashboard/my-statement")
-  revalidatePath("/dashboard/statement")
+  revalidateDistributionPaths()
+  return { success: true }
+}
+
+export async function updateDistributedFundTransaction(
+  data: z.infer<typeof updateDistributedFundTransactionSchema>
+) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can update distribution transactions" }
+  }
+
+  const result = updateDistributedFundTransactionSchema.safeParse(data)
+
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { transactionId, amount, fundDate, description, paymentMode } = result.data
+  const parsedFundDate = new Date(fundDate)
+
+  if (Number.isNaN(parsedFundDate.getTime())) {
+    return { error: "Invalid fund date" }
+  }
+
+  const transaction = await prisma.fund.findUnique({
+    where: { id: transactionId },
+    select: {
+      id: true,
+      amount: true,
+      userId: true,
+      receivedFrom: true,
+      user: {
+        select: {
+          id: true,
+          receivedAmount: true,
+        },
+      },
+    },
+  })
+
+  if (!transaction) {
+    return { error: "Transaction not found" }
+  }
+
+  if (!transaction.receivedFrom.startsWith(ADMIN_DISTRIBUTION_PREFIX)) {
+    return { error: "Only admin distribution transactions can be edited" }
+  }
+
+  const amountDelta = amount - transaction.amount
+  const nextReceivedAmount = Math.max(0, transaction.user.receivedAmount + amountDelta)
+  const source = getDistributionSource(transaction.receivedFrom)
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: transaction.userId },
+      data: { receivedAmount: nextReceivedAmount },
+    }),
+    prisma.fund.update({
+      where: { id: transactionId },
+      data: {
+        amount,
+        fundDate: parsedFundDate,
+        paymentMode,
+        receivedFrom: buildDistributionReceivedFrom(source, description),
+      },
+    }),
+  ])
+
+  revalidateDistributionPaths()
+  return { success: true }
+}
+
+export async function deleteDistributedFundTransaction(
+  data: z.infer<typeof deleteDistributedFundTransactionSchema>
+) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can delete distribution transactions" }
+  }
+
+  const result = deleteDistributedFundTransactionSchema.safeParse(data)
+
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { transactionId } = result.data
+
+  const transaction = await prisma.fund.findUnique({
+    where: { id: transactionId },
+    select: {
+      id: true,
+      amount: true,
+      userId: true,
+      receivedFrom: true,
+      user: {
+        select: {
+          receivedAmount: true,
+        },
+      },
+    },
+  })
+
+  if (!transaction) {
+    return { error: "Transaction not found" }
+  }
+
+  if (!transaction.receivedFrom.startsWith(ADMIN_DISTRIBUTION_PREFIX)) {
+    return { error: "Only admin distribution transactions can be deleted" }
+  }
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: transaction.userId },
+      data: {
+        receivedAmount: Math.max(0, transaction.user.receivedAmount - transaction.amount),
+      },
+    }),
+    prisma.fund.delete({
+      where: { id: transactionId },
+    }),
+  ])
+
+  revalidateDistributionPaths()
   return { success: true }
 }
 
@@ -553,6 +718,7 @@ export async function getDistributedFundTransactions() {
       id: true,
       amount: true,
       receivedFrom: true,
+      paymentMode: true,
       fundDate: true,
       createdAt: true,
       user: {
@@ -567,6 +733,12 @@ export async function getDistributedFundTransactions() {
     },
     take: 100,
   })
+  .then((transactions) =>
+    transactions.map((transaction) => ({
+      ...transaction,
+      description: parseDistributionDescription(transaction.receivedFrom),
+    }))
+  )
 }
 
 export async function getAllMembers() {

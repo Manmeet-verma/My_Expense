@@ -14,6 +14,7 @@ interface StatsCardsProps {
     paid?: number
     totalApprovedAmount: number
     totalPaidAmount?: number
+    collectionAmount?: number
     totalBudget?: number
     submittedAmount?: number
     remainingBudget?: number
@@ -33,7 +34,7 @@ export function StatsCards({ stats, mode = "member" }: StatsCardsProps) {
     },
     {
       title: "Collection",
-      value: formatCurrency(stats.totalBudget ?? 0),
+      value: formatCurrency(stats.collectionAmount ?? stats.totalBudget ?? 0),
       icon: DollarSign,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",
