@@ -1,10 +1,11 @@
-import NextAuth, { getServerSession, type NextAuthOptions } from "next-auth"
+import { getServerSession, type NextAuthOptions } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { compare, hash } from "bcryptjs"
 import { prisma } from "./prisma"
 import { Role } from "@/lib/types"
 
 const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET
+const isProduction = process.env.NODE_ENV === "production"
 
 if (!authSecret) {
   throw new Error("AUTH_SECRET (or NEXTAUTH_SECRET) is required")
@@ -13,9 +14,19 @@ if (!authSecret) {
 export const authOptions: NextAuthOptions = {
   secret: authSecret,
   jwt: {
-    maxAge: 365 * 24 * 60 * 60,
+    maxAge: 5 * 365 * 24 * 60 * 60,
   },
-  
+  cookies: {
+    sessionToken: {
+      name: isProduction ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: isProduction ? "none" : "lax",
+        path: "/",
+        secure: isProduction,
+      },
+    },
+  },
   providers: [
     Credentials({
       name: "credentials",
@@ -82,7 +93,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       console.log("[JWT] jwt callback", { user, token: { ...token, picture: undefined } })
       if (user) {
         token.id = user.id as string
@@ -104,7 +115,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 365 * 24 * 60 * 60,
+    maxAge: 5 * 365 * 24 * 60 * 60,
     updateAge: 24 * 60 * 60,
   },
 }

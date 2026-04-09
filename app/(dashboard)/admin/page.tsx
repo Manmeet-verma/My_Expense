@@ -27,13 +27,7 @@ function getStatusVariant(status: string): "warning" | "success" | "destructive"
 }
 
 export default async function AdminPage() {
-  let session = null
-  try {
-    session = await auth()
-  } catch (error) {
-    console.error("Admin page auth error:", error)
-    redirect("/login")
-  }
+  const session = await auth()
 
   if (!session?.user) {
     redirect("/login")
