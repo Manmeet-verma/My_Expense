@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { formatCurrency } from "@/lib/utils"
 import { broadcastExpenseChange } from "@/lib/supabase/realtime"
+import { CheckCircle } from "lucide-react"
 
 
 interface EnhancedExpenseFormProps {
@@ -34,6 +35,7 @@ export function EnhancedExpenseForm({
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
   const [expenseAmount, setExpenseAmount] = useState(0)
   const [liveTotalAmountUsed, setLiveTotalAmountUsed] = useState(totalAmountUsed)
   const [selectedCategory, setSelectedCategory] = useState<string>(categories[0]?.name || "")
@@ -73,10 +75,26 @@ export function EnhancedExpenseForm({
       setExpenseAmount(0)
       setLiveTotalAmountUsed((prev) => prev + createdAmount)
       void broadcastExpenseChange("member-create")
-      router.refresh()
-      if (onSuccess) onSuccess()
+      setSuccess(true)
       setLoading(false)
+      setTimeout(() => {
+        router.refresh()
+        if (onSuccess) onSuccess()
+        setSuccess(false)
+        setSelectedCategory(categories[0]?.name || "")
+      }, 1500)
     }
+  }
+
+  if (success) {
+    return (
+      <div className="text-center py-8">
+        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <CheckCircle className="w-6 h-6 text-green-600" />
+        </div>
+        <p className="text-green-600 font-medium">Expense added successfully!</p>
+      </div>
+    )
   }
 
   return (
