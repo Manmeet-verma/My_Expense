@@ -44,5 +44,5 @@ export default async function AdminMembersPage() {
     members = []
   }
 
-  return <MembersContent members={members} canManage={isAdmin} canApproveExpenses={isSupervisor} />
+  return <MembersContent members={members} canManage={isAdmin || isSupervisor} canApproveExpenses={isSupervisor} />
 }

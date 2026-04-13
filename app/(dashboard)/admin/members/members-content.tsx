@@ -220,7 +220,9 @@ export default function MembersContent({
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Member List</h1>
           <p className="mt-1 text-gray-600">
-            {canManage ? "Admin access: manage member accounts" : "Supervisor access: view member accounts"}
+            {canManage
+              ? "Admin and supervisor access: manage member accounts"
+              : "Supervisor access: view member accounts"}
           </p>
         </div>
 
