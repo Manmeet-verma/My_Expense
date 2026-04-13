@@ -326,8 +326,8 @@ export async function adminChangePassword(data: z.infer<typeof adminChangePasswo
 export async function adminResetMemberPassword(data: z.infer<typeof adminResetMemberPasswordSchema>) {
   const session = await auth()
 
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return { error: "Only admins can reset member passwords" }
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
+    return { error: "Only admins and supervisors can reset member passwords" }
   }
 
   const result = adminResetMemberPasswordSchema.safeParse(data)

@@ -22,7 +22,7 @@ export default async function AdminResetPasswordPage() {
     redirect("/login")
   }
 
-  if (session.user.role !== "ADMIN") {
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR") {
     redirect("/dashboard")
   }
 
