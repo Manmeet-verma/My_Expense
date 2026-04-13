@@ -583,7 +583,7 @@ export async function deleteMember(data: z.infer<typeof deleteMemberSchema>) {
 
   const user = await prisma.user.findUnique({
     where: { id: memberId },
-    select: { id: true, role: true, _count: { select: { expenses: true } } },
+    select: { id: true, role: true },
   })
 
   if (!user) {
@@ -592,10 +592,6 @@ export async function deleteMember(data: z.infer<typeof deleteMemberSchema>) {
 
   if (user.role !== "MEMBER") {
     return { error: "Only member accounts can be deleted" }
-  }
-
-  if (user._count.expenses > 0) {
-    return { error: "This member has expense data. Use password reset instead of deleting the account." }
   }
 
   await prisma.user.delete({
