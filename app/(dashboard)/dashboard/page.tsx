@@ -17,9 +17,9 @@ export default async function DashboardPage() {
   const stats = await getExpenseStats()
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">My Expenses</h1>
+    <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mb-5 sm:mb-8">
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">My Expenses</h1>
       </div>
 
       {stats && <StatsCards mode="member" stats={stats} />}

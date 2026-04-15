@@ -23,6 +23,8 @@ interface StatsCardsProps {
 
 export function StatsCards({ stats, mode = "member" }: StatsCardsProps) {
   const totalExpenseAmount = stats.submittedAmount ?? 0
+  const collectionAmount = stats.collectionAmount ?? stats.totalBudget ?? 0
+  const remainingCollection = collectionAmount - totalExpenseAmount
 
   const memberCards = [
     {
@@ -34,10 +36,17 @@ export function StatsCards({ stats, mode = "member" }: StatsCardsProps) {
     },
     {
       title: "Collection",
-      value: formatCurrency(stats.collectionAmount ?? stats.totalBudget ?? 0),
+      value: formatCurrency(collectionAmount),
       icon: DollarSign,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",
+    },
+    {
+      title: "Remaining Collection",
+      value: formatCurrency(remainingCollection),
+      icon: DollarSign,
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-50",
     },
     {
       title: "Approved",
@@ -122,20 +131,23 @@ export function StatsCards({ stats, mode = "member" }: StatsCardsProps) {
   ]
 
   const cards = mode === "admin" ? adminCards : memberCards
-  const gridClass = mode === "admin" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"
+  const gridClass =
+    mode === "admin"
+      ? "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      : "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
 
   return (
     <div className={gridClass}>
       {cards.map((card) => (
         <Card key={card.title}>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">{card.title}</p>
-                <p className="text-2xl font-bold mt-1">{card.value}</p>
+              <div className="min-w-0 flex-1 pr-2">
+                <p className="text-xs text-gray-500 sm:text-sm">{card.title}</p>
+                <p className="mt-1 text-lg font-bold leading-tight text-gray-900 sm:text-2xl">{card.value}</p>
               </div>
-              <div className={`p-2 rounded-lg ${card.bgColor}`}>
-                <card.icon className={`h-5 w-5 ${card.color}`} />
+              <div className={`rounded-lg p-2 ${card.bgColor}`}>
+                <card.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.color}`} />
               </div>
             </div>
           </CardContent>

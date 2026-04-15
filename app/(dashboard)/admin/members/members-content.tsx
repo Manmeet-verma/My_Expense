@@ -214,6 +214,13 @@ export default function MembersContent({
           ? collectionFunds.reduce((sum, fund) => sum + fund.amount, 0)
           : expensesByStatus.pending.reduce((sum, expense) => sum + expense.amount, 0)
 
+  const totalCollection = collectionFunds.reduce((sum, fund) => sum + fund.amount, 0)
+  const totalExpenseAmount =
+    expensesByStatus.approved.reduce((sum, expense) => sum + expense.amount, 0) +
+    expensesByStatus.rejected.reduce((sum, expense) => sum + expense.amount, 0) +
+    expensesByStatus.pending.reduce((sum, expense) => sum + expense.amount, 0)
+  const remainingCollection = totalCollection - totalExpenseAmount
+
   return (
     <div className="min-h-[calc(100vh-4rem)] p-3 sm:p-6">
       <div>
@@ -379,6 +386,14 @@ export default function MembersContent({
               >
                 Collection ({collectionFunds.length})
               </button>
+            </div>
+
+            <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+              <p className="text-xs font-medium text-emerald-700">Remaining Collection</p>
+              <p className="mt-1 text-lg font-semibold text-emerald-900">{formatCurrency(remainingCollection)}</p>
+              <p className="mt-1 text-xs text-emerald-700">
+                Collection ({formatCurrency(totalCollection)}) - Total Expense ({formatCurrency(totalExpenseAmount)})
+              </p>
             </div>
 
             {activeView === "pending" && canApproveExpenses && expensesByStatus.pending.length > 0 && (

@@ -27,6 +27,10 @@ const paymentSchema = z.object({
   id: z.string(),
 })
 
+const adminDeleteExpenseSchema = z.object({
+  id: z.string(),
+})
+
 export async function createExpense(data: z.infer<typeof expenseSchema>) {
   const session = await auth()
   
@@ -263,6 +267,38 @@ export async function markExpensePaid(data: z.infer<typeof paymentSchema>) {
     data: {
       status: "PAID",
     },
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/admin/members")
+  return { success: true }
+}
+
+export async function deleteExpenseFromReview(data: z.infer<typeof adminDeleteExpenseSchema>) {
+  const session = await auth()
+
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
+    return { error: "Unauthorized" }
+  }
+
+  const result = adminDeleteExpenseSchema.safeParse(data)
+
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { id } = result.data
+
+  const expense = await prisma.expense.findUnique({
+    where: { id },
+  })
+
+  if (!expense) {
+    return { error: "Expense not found" }
+  }
+
+  await prisma.expense.delete({
+    where: { id },
   })
 
   revalidatePath("/admin")
