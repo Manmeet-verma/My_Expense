@@ -444,6 +444,8 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
                       >
                         {processingId === row.id ? "Updating..." : "Pay"}
                       </Button>
+                    ) : row.expenseStatus === "PAID" ? (
+                      <span className="text-sm font-medium text-green-700">Paid</span>
                     ) : (
                       <span className="text-gray-400">-</span>
                     )}
