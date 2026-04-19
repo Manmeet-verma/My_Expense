@@ -19,6 +19,7 @@ interface ExpenseRow {
   category: string
   mainHead: string
   description: string
+  createdAt: Date | null
   amount: number
   expenseStatus: ExpenseStatus
   verifyStatus: VerifyStatus
@@ -32,6 +33,7 @@ interface AdminExpenseManagementTableProps {
     id: string
     title: string
     description: string | null
+    createdAt: Date
     amount: number
     category: string
     status: ExpenseStatus
@@ -86,6 +88,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
         category: formatCategory(expense.category),
         mainHead: expense.title || "-",
         description: expense.description || "-",
+        createdAt: expense.createdAt,
         amount: expense.amount,
         expenseStatus: expense.status,
         verifyStatus: getVerifyStatus(expense.status),
@@ -140,6 +143,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
       category: "",
       mainHead: "",
       description: "",
+      createdAt: null,
       amount: 0,
       expenseStatus: "PENDING",
       verifyStatus: "PENDING",
@@ -221,13 +225,13 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
 
         <button
           onClick={() => {
-            setDashboardFilter("pending")
+            setDashboardFilter("rejected")
             setCurrentPage(1)
           }}
-          className={`rounded-lg border p-4 text-left transition ${dashboardFilter === "pending" ? "border-red-400 bg-red-50" : "border-gray-200 bg-white"}`}
+          className={`rounded-lg border p-4 text-left transition ${dashboardFilter === "rejected" ? "border-red-400 bg-red-50" : "border-gray-200 bg-white"}`}
         >
           <p className="text-xs text-gray-600">Total Unapproved Exp. - Req.</p>
-          <p className="mt-1 text-xl font-bold text-red-700">{formatCurrency(amounts.pending)}</p>
+          <p className="mt-1 text-xl font-bold text-red-700">{formatCurrency(amounts.rejected)}</p>
         </button>
 
         <button
@@ -296,8 +300,8 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
         <Button onClick={addDraftEntry}>Add Entry</Button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-        <table className="min-w-[1200px] w-full text-xs sm:text-sm">
+      <div className="w-full overflow-x-auto rounded-lg border border-gray-200 bg-white">
+        <table className="min-w-full w-full text-xs sm:text-sm">
           <thead className="bg-gray-50 text-left text-gray-600">
             <tr>
               <th className="px-4 py-3 font-semibold">Sr No</th>
