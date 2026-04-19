@@ -58,6 +58,7 @@ export default function MembersContent({
   const [loadingExpenses, setLoadingExpenses] = useState(false)
   const [approving, setApproving] = useState(false)
   const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([])
+  const [expenseHeadSearch, setExpenseHeadSearch] = useState("")
   const [expensesByStatus, setExpensesByStatus] = useState<{
     approved: MemberExpense[]
     rejected: MemberExpense[]
@@ -98,6 +99,7 @@ export default function MembersContent({
     setSelectedMember(member)
     setActiveView("pending")
     setSelectedPendingIds([])
+    setExpenseHeadSearch("")
     setLoadingExpenses(true)
 
     try {
@@ -205,14 +207,17 @@ export default function MembersContent({
           ? collectionFunds
           : expensesByStatus.pending
 
+  const filteredCurrentExpenses =
+    activeView === "collection"
+      ? currentExpenses
+      : (currentExpenses as MemberExpense[]).filter((expense) =>
+          expense.title.toLowerCase().includes(expenseHeadSearch.trim().toLowerCase())
+        )
+
   const currentTotal =
-    activeView === "approved"
-      ? expensesByStatus.approved.reduce((sum, expense) => sum + expense.amount, 0)
-      : activeView === "rejected"
-        ? expensesByStatus.rejected.reduce((sum, expense) => sum + expense.amount, 0)
-        : activeView === "collection"
-          ? collectionFunds.reduce((sum, fund) => sum + fund.amount, 0)
-          : expensesByStatus.pending.reduce((sum, expense) => sum + expense.amount, 0)
+    activeView === "collection"
+      ? (filteredCurrentExpenses as MemberCollection[]).reduce((sum, fund) => sum + fund.amount, 0)
+      : (filteredCurrentExpenses as MemberExpense[]).reduce((sum, expense) => sum + expense.amount, 0)
 
   const totalCollection = collectionFunds.reduce((sum, fund) => sum + fund.amount, 0)
   const totalExpenseAmount =
@@ -388,6 +393,18 @@ export default function MembersContent({
               </button>
             </div>
 
+            {activeView !== "collection" && (
+              <div className="mb-4 max-w-sm">
+                <input
+                  type="text"
+                  value={expenseHeadSearch}
+                  onChange={(e) => setExpenseHeadSearch(e.target.value)}
+                  placeholder="Search by Exp. Head Req."
+                  className="h-9 w-full rounded-md border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
+
             <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
               <p className="text-xs font-medium text-emerald-700">Remaining Collection</p>
               <p className="mt-1 text-lg font-semibold text-emerald-900">{formatCurrency(remainingCollection)}</p>
@@ -427,7 +444,7 @@ export default function MembersContent({
 
             {loadingExpenses ? (
               <div className="py-8 text-center text-gray-500">Loading records...</div>
-            ) : currentExpenses.length === 0 ? (
+            ) : filteredCurrentExpenses.length === 0 ? (
               <div className="py-8 text-center text-gray-500">
                 No {activeView === "collection" ? "collections" : "expenses"} found in this section
               </div>
@@ -459,7 +476,7 @@ export default function MembersContent({
                   </thead>
                   <tbody>
                     {activeView === "collection"
-                      ? (currentExpenses as MemberCollection[]).map((fund) => (
+                      ? (filteredCurrentExpenses as MemberCollection[]).map((fund) => (
                           <tr key={fund.id} className="border-t border-gray-100">
                             <td className="px-3 py-2 text-gray-700">{formatDate(fund.fundDate)}</td>
                             <td className="px-3 py-2 text-gray-900">{fund.receivedFrom}</td>
@@ -467,7 +484,7 @@ export default function MembersContent({
                             <td className="px-3 py-2 text-gray-900">{formatCurrency(fund.amount)}</td>
                           </tr>
                         ))
-                      : (currentExpenses as MemberExpense[]).map((expense) => (
+                      : (filteredCurrentExpenses as MemberExpense[]).map((expense) => (
                           <tr key={expense.id} className="border-t border-gray-100">
                             {activeView === "pending" && canApproveExpenses && (
                               <td className="px-3 py-2">

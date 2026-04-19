@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { getExpenseStats } from "@/actions/expense"
+import { getExpenseStats, getMyExpenses } from "@/actions/expense"
 import { StatsCards } from "@/components/stats-cards"
+import { MemberDashboardStatusTable } from "@/components/member-dashboard-status-table"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -15,6 +16,8 @@ export default async function DashboardPage() {
   }
 
   const stats = await getExpenseStats()
+  const expenses = await getMyExpenses()
+  const siteName = session.user.name || session.user.email
 
   return (
     <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-8 lg:px-8">
@@ -23,6 +26,7 @@ export default async function DashboardPage() {
       </div>
 
       {stats && <StatsCards mode="member" stats={stats} />}
+      <MemberDashboardStatusTable expenses={expenses} site={siteName} />
     </div>
   )
 }

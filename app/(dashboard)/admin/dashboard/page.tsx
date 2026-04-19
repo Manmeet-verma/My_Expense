@@ -1,11 +1,9 @@
 import { auth } from "@/lib/auth"
-import Link from "next/link"
 import { redirect } from "next/navigation"
 import { getAdmins } from "@/actions/auth"
-import { getCategoryStatistics } from "@/actions/category"
+import { getAllExpenses, getExpenseStats } from "@/actions/expense"
 import { AdminSection } from "@/components/forms/admin-section"
-import { AdminCategoryUsageSection } from "@/components/admin-category-usage-section"
-import { buttonVariants } from "@/components/ui/button"
+import { AdminExpenseManagementTable } from "@/components/admin-expense-management-table"
 
 export default async function AdminDashboardPage() {
   const session = await auth()
@@ -19,26 +17,24 @@ export default async function AdminDashboardPage() {
   }
 
   const admins = await getAdmins()
-  const categories = await getCategoryStatistics()
+  const expenses = await getAllExpenses()
+  const stats = await getExpenseStats()
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="mt-1 text-gray-600">Create admin accounts and manage admin list</p>
+        <p className="mt-1 text-gray-600">Manage expense heads and admin accounts</p>
       </div>
 
       <AdminSection admins={admins} currentAdminId={session.user.id} />
 
       <div className="mt-10">
-        <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-          <h2 className="text-lg font-semibold text-gray-900">Category Usage</h2>
-          <Link href="/admin/add-category" className={buttonVariants()}>
-            Create Category
-          </Link>
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Expense Management</h2>
+          <p className="mt-1 text-sm text-gray-600">Review entries in table format with search and pagination</p>
         </div>
-
-        <AdminCategoryUsageSection categories={categories} />
+        <AdminExpenseManagementTable expenses={expenses} totalReceivedAmount={stats?.collectionAmount ?? 0} />
       </div>
     </div>
   )

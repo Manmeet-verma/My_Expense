@@ -198,8 +198,8 @@ export async function deleteExpense(id: string) {
 export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema>) {
   const session = await auth()
   
-  if (!session?.user || session.user.role !== "SUPERVISOR") {
-    return { error: "Unauthorized - Supervisor access required" }
+  if (!session?.user || (session.user.role !== "SUPERVISOR" && session.user.role !== "ADMIN")) {
+    return { error: "Unauthorized - Admin or Supervisor access required" }
   }
 
   const result = approvalSchema.safeParse(data)
@@ -219,7 +219,7 @@ export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema
   }
 
   if (expense.status !== "PENDING") {
-    return { error: "Only pending expenses can be approved or rejected by supervisor" }
+    return { error: "Only pending expenses can be approved or rejected" }
   }
 
   await prisma.expense.update({
@@ -231,6 +231,7 @@ export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema
   })
 
   revalidatePath("/admin")
+  revalidatePath("/admin/dashboard")
   revalidatePath("/admin/members")
   return { success: true }
 }
@@ -270,6 +271,7 @@ export async function markExpensePaid(data: z.infer<typeof paymentSchema>) {
   })
 
   revalidatePath("/admin")
+  revalidatePath("/admin/dashboard")
   revalidatePath("/admin/members")
   return { success: true }
 }
@@ -335,6 +337,16 @@ export async function getExpenseStats() {
     _sum: { amount: true },
   })
 
+  const pendingAmount = await prisma.expense.aggregate({
+    where: { ...where, status: "PENDING" },
+    _sum: { amount: true },
+  })
+
+  const rejectedAmount = await prisma.expense.aggregate({
+    where: { ...where, status: "REJECTED" },
+    _sum: { amount: true },
+  })
+
   const totalCollectionAmount = await prisma.fund.aggregate({
     where: session.user.role === "ADMIN" ? {} : { userId: session.user.id },
     _sum: { amount: true },
@@ -365,6 +377,8 @@ export async function getExpenseStats() {
     approved,
     rejected,
     paid,
+    pendingAmount: pendingAmount._sum.amount || 0,
+    rejectedAmount: rejectedAmount._sum.amount || 0,
     totalApprovedAmount: totalApprovedAmount._sum.amount || 0,
     totalPaidAmount: totalPaidAmount._sum.amount || 0,
     collectionAmount: totalCollectionAmount._sum.amount || 0,
