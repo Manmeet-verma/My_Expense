@@ -93,7 +93,6 @@ export function SignupForm() {
               name="aadhaarNo"
               type="text"
               inputMode="numeric"
-              pattern="\\d{12}"
               maxLength={12}
               placeholder="12-digit Aadhaar number"
               required
