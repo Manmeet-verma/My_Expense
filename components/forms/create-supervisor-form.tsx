@@ -39,7 +39,7 @@ export function CreateSupervisorForm() {
     }
 
     form.reset()
-    setSuccess("Supervisor account created successfully")
+    setSuccess("Verifier account created successfully")
     setLoading(false)
     router.refresh()
   }
@@ -47,8 +47,8 @@ export function CreateSupervisorForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Create Supervisor Account</CardTitle>
-        <CardDescription>Admin only: create a supervisor login account</CardDescription>
+        <CardTitle className="text-2xl font-bold">Create Verifier Account</CardTitle>
+        <CardDescription>Admin only: create a verifier login account</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-4">
@@ -68,7 +68,7 @@ export function CreateSupervisorForm() {
               id="supervisor-name"
               name="name"
               type="text"
-              placeholder="Supervisor Name"
+              placeholder="Verifier Name"
               required
             />
           </div>
@@ -78,7 +78,7 @@ export function CreateSupervisorForm() {
               id="supervisor-email"
               name="email"
               type="email"
-              placeholder="supervisor@example.com"
+              placeholder="verifier@example.com"
               required
             />
           </div>
@@ -104,7 +104,7 @@ export function CreateSupervisorForm() {
             </div>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Create Supervisor"}
+            {loading ? "Creating account..." : "Create Verifier"}
           </Button>
         </CardContent>
       </form>

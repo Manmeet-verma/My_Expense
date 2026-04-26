@@ -69,7 +69,7 @@ export function ResetMemberPasswordForm({ members }: ResetMemberPasswordFormProp
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Reset Member Password</CardTitle>
-        <CardDescription>Admin and supervisor access: reset a member account password</CardDescription>
+        <CardDescription>Admin and verifier access: reset a member account password</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-4">

@@ -22,6 +22,7 @@ export function Navigation({ user }: NavProps) {
   const isAdmin = user.role === "ADMIN"
   const isSupervisor = user.role === "SUPERVISOR"
   const isAdminOrSupervisor = isAdmin || isSupervisor
+  const roleLabel = user.role === "SUPERVISOR" ? "VERIFIER" : user.role
 
   const navItems = [
     {
@@ -61,14 +62,8 @@ export function Navigation({ user }: NavProps) {
       visible: isAdminOrSupervisor,
     },
     {
-      href: "/admin/members",
-      label: "Members",
-      icon: Users,
-      visible: isAdminOrSupervisor,
-    },
-    {
       href: "/admin/create-supervisor",
-      label: "Create Supervisor",
+      label: "Create Verifier",
       icon: UserPlus,
       visible: isAdmin,
     },
@@ -140,7 +135,7 @@ export function Navigation({ user }: NavProps) {
 
             <div className="flex items-center gap-3">
               <div className="hidden md:flex items-center gap-3 whitespace-nowrap">
-                <span className="text-sm font-medium text-gray-900">{user.role}: {user.name || user.email}</span>
+                <span className="text-sm font-medium text-gray-900">{roleLabel}: {user.name || user.email}</span>
                 <Button
                   variant="ghost"
                   size="sm"

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { deleteMember } from "@/actions/auth"
 import { approveOrRejectExpense } from "@/actions/expense"
+import { ExportExcelButton } from "@/components/export-excel-button"
+import { Input } from "@/components/ui/input"
 
 interface MemberRow {
   id: string
@@ -33,6 +35,14 @@ interface MemberExpense {
   status: "APPROVED" | "REJECTED" | "PENDING"
   createdAt: string
   adminRemark: string | null
+  approvedByName?: string | null
+  approvedByRole?: "ADMIN" | "SUPERVISOR" | "MEMBER" | null
+  approvedBy?: {
+    id: string
+    name: string | null
+    email: string
+    role: "ADMIN" | "SUPERVISOR" | "MEMBER"
+  } | null
 }
 
 interface MemberCollection {
@@ -42,6 +52,37 @@ interface MemberCollection {
   paymentMode: "CASH" | "GPAY" | "BANK_ACCOUNT"
   fundDate: string
   createdAt: string
+}
+
+function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "MEMBER"): string {
+  if (role === "SUPERVISOR") return "Verifier"
+  if (role === "ADMIN") return "Admin"
+  return "Member"
+}
+
+function getApprovedBy(expense: MemberExpense): string {
+  const { status, approvedBy, approvedByName, approvedByRole } = expense
+  if (status === "PENDING") return "Pending"
+  if (approvedByName) {
+    const roleLabel = getRoleLabel(approvedByRole || approvedBy?.role || "SUPERVISOR")
+    return `${approvedByName} (${roleLabel})`
+  }
+  if (approvedBy) {
+    const roleLabel = getRoleLabel(approvedBy.role)
+    const actor = approvedBy.name || approvedBy.email
+    return `${actor} (${roleLabel})`
+  }
+  return "Verifier (Verifier)"
+}
+
+function safeParseResponse(text: string): any {
+  if (!text) return null
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { error: text }
+  }
 }
 
 type ExpenseView = "approved" | "rejected" | "pending" | "collection"
@@ -59,6 +100,10 @@ export default function MembersContent({
   const [approving, setApproving] = useState(false)
   const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([])
   const [expenseHeadSearch, setExpenseHeadSearch] = useState("")
+  const [memberFromDate, setMemberFromDate] = useState("")
+  const [memberToDate, setMemberToDate] = useState("")
+  const [detailFromDate, setDetailFromDate] = useState("")
+  const [detailToDate, setDetailToDate] = useState("")
   const [expensesByStatus, setExpensesByStatus] = useState<{
     approved: MemberExpense[]
     rejected: MemberExpense[]
@@ -100,6 +145,8 @@ export default function MembersContent({
     setActiveView("pending")
     setSelectedPendingIds([])
     setExpenseHeadSearch("")
+    setDetailFromDate("")
+    setDetailToDate("")
     setLoadingExpenses(true)
 
     try {
@@ -108,17 +155,20 @@ export default function MembersContent({
         fetch(`/api/funds/statement?userId=${member.id}`, { method: "GET" }),
       ])
 
-      const [expensesData, collectionsData] = await Promise.all([
-        expensesResponse.json(),
-        collectionsResponse.json(),
+      const [expensesText, collectionsText] = await Promise.all([
+        expensesResponse.text(),
+        collectionsResponse.text(),
       ])
 
+      const expensesData = safeParseResponse(expensesText)
+      const collectionsData = safeParseResponse(collectionsText)
+
       if (!expensesResponse.ok) {
-        throw new Error(expensesData?.error || "Failed to load expenses")
+        throw new Error(expensesData?.error || expensesText || "Failed to load expenses")
       }
 
       if (!collectionsResponse.ok) {
-        throw new Error(collectionsData?.error || "Failed to load collections")
+        throw new Error(collectionsData?.error || collectionsText || "Failed to load collections")
       }
 
       setExpensesByStatus({
@@ -198,6 +248,17 @@ export default function MembersContent({
     )
   }
 
+  const filteredMembers = useMemo(
+    () =>
+      members.filter((member) => {
+        const joined = new Date(member.createdAt)
+        const startOk = !memberFromDate || joined >= new Date(`${memberFromDate}T00:00:00`)
+        const endOk = !memberToDate || joined <= new Date(`${memberToDate}T23:59:59`)
+        return startOk && endOk
+      }),
+    [members, memberFromDate, memberToDate]
+  )
+
   const currentExpenses =
     activeView === "approved"
       ? expensesByStatus.approved
@@ -207,10 +268,25 @@ export default function MembersContent({
           ? collectionFunds
           : expensesByStatus.pending
 
+  const dateFilteredCurrentExpenses =
+    activeView === "collection"
+      ? (currentExpenses as MemberCollection[]).filter((fund) => {
+          const fundDate = new Date(fund.fundDate)
+          const startOk = !detailFromDate || fundDate >= new Date(`${detailFromDate}T00:00:00`)
+          const endOk = !detailToDate || fundDate <= new Date(`${detailToDate}T23:59:59`)
+          return startOk && endOk
+        })
+      : (currentExpenses as MemberExpense[]).filter((expense) => {
+          const expDate = new Date(expense.createdAt)
+          const startOk = !detailFromDate || expDate >= new Date(`${detailFromDate}T00:00:00`)
+          const endOk = !detailToDate || expDate <= new Date(`${detailToDate}T23:59:59`)
+          return startOk && endOk
+        })
+
   const filteredCurrentExpenses =
     activeView === "collection"
-      ? currentExpenses
-      : (currentExpenses as MemberExpense[]).filter((expense) =>
+      ? dateFilteredCurrentExpenses
+      : (dateFilteredCurrentExpenses as MemberExpense[]).filter((expense) =>
           expense.title.toLowerCase().includes(expenseHeadSearch.trim().toLowerCase())
         )
 
@@ -226,6 +302,46 @@ export default function MembersContent({
     expensesByStatus.pending.reduce((sum, expense) => sum + expense.amount, 0)
   const remainingCollection = totalCollection - totalExpenseAmount
 
+  const memberListExportData = useMemo(
+    () =>
+      filteredMembers.map((member, index) => ({
+        "Sr No": index + 1,
+        Name: member.name || "-",
+        Email: member.email,
+        Expenses: member._count.expenses,
+        Collection: member.receivedAmount,
+        Edits: member.totalEdits,
+        Joined: formatDate(member.createdAt),
+      })),
+    [filteredMembers]
+  )
+
+  const selectedViewExportData = useMemo(() => {
+    if (!selectedMember) return []
+
+    if (activeView === "collection") {
+      return (filteredCurrentExpenses as MemberCollection[]).map((fund, index) => ({
+        "Sr No": index + 1,
+        Member: selectedMember.name || selectedMember.email,
+        Date: formatDate(fund.fundDate),
+        "Received From": fund.receivedFrom,
+        "Payment Mode": fund.paymentMode,
+        Amount: fund.amount,
+      }))
+    }
+
+    return (filteredCurrentExpenses as MemberExpense[]).map((expense, index) => ({
+      "Sr No": index + 1,
+      Member: selectedMember.name || selectedMember.email,
+      Title: expense.title,
+      Description: expense.description || "-",
+      Category: expense.category,
+      Amount: expense.amount,
+      Date: formatDate(expense.createdAt),
+      Status: expense.status,
+    }))
+  }, [selectedMember, activeView, filteredCurrentExpenses])
+
   return (
     <div className="min-h-[calc(100vh-4rem)] p-3 sm:p-6">
       <div>
@@ -233,12 +349,41 @@ export default function MembersContent({
           <h1 className="text-2xl font-bold text-gray-900">Member List</h1>
           <p className="mt-1 text-gray-600">
             {canManage
-              ? "Admin and supervisor access: manage member accounts"
-              : "Supervisor access: view member accounts"}
+              ? "Admin and verifier access: manage member accounts"
+              : "Verifier access: view member accounts"}
           </p>
+          <div className="mt-3">
+            <ExportExcelButton
+              data={memberListExportData}
+              fileName="admin-verifier-members"
+              sheetName="Members"
+              label="Export Members Excel"
+            />
+          </div>
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-white">
+          <div className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-600">From</span>
+              <Input
+                type="date"
+                value={memberFromDate}
+                onChange={(e) => setMemberFromDate(e.target.value)}
+                className="w-full sm:w-40"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-600">To</span>
+              <Input
+                type="date"
+                value={memberToDate}
+                onChange={(e) => setMemberToDate(e.target.value)}
+                className="w-full sm:w-40"
+              />
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="min-w-[780px] w-full text-xs sm:text-sm">
               <thead className="bg-gray-50 text-left text-gray-600">
@@ -253,14 +398,14 @@ export default function MembersContent({
                 </tr>
               </thead>
               <tbody>
-                {members.length === 0 ? (
+                {filteredMembers.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
                       No members found
                     </td>
                   </tr>
                 ) : (
-                  members.map((member) => (
+                  filteredMembers.map((member) => (
                     <tr key={member.id} className="border-t border-gray-100">
                       <td className="px-4 py-3 font-medium text-gray-900">
                         <button
@@ -358,12 +503,20 @@ export default function MembersContent({
                 </h2>
                 <p className="text-sm text-gray-600">{selectedMember.email}</p>
               </div>
-              <button
-                onClick={() => setSelectedMember(null)}
-                className="text-sm text-gray-600 hover:text-gray-900"
-              >
-                Close
-              </button>
+              <div className="flex items-center gap-2">
+                <ExportExcelButton
+                  data={selectedViewExportData}
+                  fileName={`member-${selectedMember.email}-${activeView}`}
+                  sheetName="MemberData"
+                  label="Export Current View"
+                />
+                <button
+                  onClick={() => setSelectedMember(null)}
+                  className="text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Close
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-col gap-2 mb-4 max-w-xs">
@@ -391,6 +544,27 @@ export default function MembersContent({
               >
                 Collection ({collectionFunds.length})
               </button>
+            </div>
+
+            <div className="mb-4 flex flex-col gap-2 sm:max-w-md sm:flex-row sm:items-center sm:gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600">From</span>
+                <Input
+                  type="date"
+                  value={detailFromDate}
+                  onChange={(e) => setDetailFromDate(e.target.value)}
+                  className="w-full sm:w-40"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600">To</span>
+                <Input
+                  type="date"
+                  value={detailToDate}
+                  onChange={(e) => setDetailToDate(e.target.value)}
+                  className="w-full sm:w-40"
+                />
+              </div>
             </div>
 
             {activeView !== "collection" && (
@@ -469,6 +643,7 @@ export default function MembersContent({
                           <th className="px-3 py-2 font-semibold">Amount</th>
                           <th className="px-3 py-2 font-semibold">Date</th>
                           <th className="px-3 py-2 font-semibold">Status</th>
+                          <th className="px-3 py-2 font-semibold">Approved By</th>
                           <th className="px-3 py-2 font-semibold">Action</th>
                         </>
                       )}
@@ -501,6 +676,7 @@ export default function MembersContent({
                             <td className="px-3 py-2 text-gray-900">{formatCurrency(expense.amount)}</td>
                             <td className="px-3 py-2 text-gray-700">{formatDate(expense.createdAt)}</td>
                             <td className="px-3 py-2 text-gray-700">{expense.status}</td>
+                              <td className="px-3 py-2 text-gray-700">{getApprovedBy(expense)}</td>
                             <td className="px-3 py-2">
                               {activeView === "pending" && canApproveExpenses ? (
                                 <button
@@ -511,7 +687,7 @@ export default function MembersContent({
                                   Approve
                                 </button>
                               ) : activeView === "pending" ? (
-                                <span className="text-xs text-gray-400">Waiting for supervisor</span>
+                                <span className="text-xs text-gray-400">Waiting for verifier</span>
                               ) : (
                                 <span className="text-xs text-gray-400">-</span>
                               )}

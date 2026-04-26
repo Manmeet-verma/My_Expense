@@ -3,11 +3,14 @@
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { approveOrRejectExpense, markExpensePaid } from "@/actions/expense"
+import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { ExportExcelButton } from "@/components/export-excel-button"
 import { formatCurrency } from "@/lib/utils"
 
 type ExpenseStatus = "PENDING" | "APPROVED" | "REJECTED" | "PAID"
+type ApproverRole = "ADMIN" | "SUPERVISOR" | "MEMBER"
 type VerifyStatus = "VERIFIED" | "REJECTED" | "PENDING"
 type ApprovalStatus = "APPROVED" | "PENDING"
 type DashboardFilter = "all" | "pending" | "approved" | "paid" | "rejected"
@@ -22,6 +25,9 @@ interface ExpenseRow {
   createdAt: Date | null
   amount: number
   expenseStatus: ExpenseStatus
+  approvedByName: string | null
+  approvedByEmail: string | null
+  approvedByRole: ApproverRole | null
   verifyStatus: VerifyStatus
   approvalStatus: ApprovalStatus
   isDraft: boolean
@@ -40,6 +46,11 @@ interface AdminExpenseManagementTableProps {
     createdBy?: {
       name: string | null
       email: string
+    } | null
+    approvedBy?: {
+      name: string | null
+      email: string
+      role: ApproverRole
     } | null
   }>
 }
@@ -72,9 +83,35 @@ function getDisplayStatus(status: ExpenseStatus): DisplayStatus {
   return "Pending"
 }
 
+function getRoleLabel(role: ApproverRole): string {
+  if (role === "SUPERVISOR") return "Verifier"
+  if (role === "ADMIN") return "Admin"
+  return "Member"
+}
+
+function getApprovedBy(
+  status: ExpenseStatus,
+  approvedByName: string | null,
+  approvedByEmail: string | null,
+  approvedByRole: ApproverRole | null
+): string {
+  if (status === "PENDING") return "Pending"
+
+  if (approvedByRole) {
+    const roleLabel = getRoleLabel(approvedByRole)
+    const actor = approvedByName || approvedByEmail || roleLabel
+    return `${actor} (${roleLabel})`
+  }
+
+  if (status === "PAID") return "Admin (Admin)"
+  return "Verifier (Verifier)"
+}
+
 export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: AdminExpenseManagementTableProps) {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
+  const [fromDate, setFromDate] = useState("")
+  const [toDate, setToDate] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [dashboardFilter, setDashboardFilter] = useState<DashboardFilter>("all")
   const [draftEntries, setDraftEntries] = useState<ExpenseRow[]>([])
@@ -91,6 +128,9 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
         createdAt: expense.createdAt,
         amount: expense.amount,
         expenseStatus: expense.status,
+        approvedByName: expense.approvedBy?.name || null,
+        approvedByEmail: expense.approvedBy?.email || null,
+        approvedByRole: expense.approvedBy?.role || null,
         verifyStatus: getVerifyStatus(expense.status),
         approvalStatus: getApprovalStatus(expense.status),
         isDraft: false,
@@ -122,11 +162,22 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
     return allRows.filter((row) => row.expenseStatus === dashboardFilter.toUpperCase())
   }, [allRows, dashboardFilter])
 
+  const dateFilteredRows = useMemo(() => {
+    return dashboardFilteredRows.filter((row) => {
+      if (row.isDraft || !row.createdAt) return true
+
+      const rowDate = new Date(row.createdAt)
+      const startOk = !fromDate || rowDate >= new Date(`${fromDate}T00:00:00`)
+      const endOk = !toDate || rowDate <= new Date(`${toDate}T23:59:59`)
+      return startOk && endOk
+    })
+  }, [dashboardFilteredRows, fromDate, toDate])
+
   const filteredRows = useMemo(() => {
-    if (!searchTerm.trim()) return dashboardFilteredRows
+    if (!searchTerm.trim()) return dateFilteredRows
     const lowered = searchTerm.trim().toLowerCase()
-    return dashboardFilteredRows.filter((row) => row.mainHead.toLowerCase().includes(lowered))
-  }, [dashboardFilteredRows, searchTerm])
+    return dateFilteredRows.filter((row) => row.mainHead.toLowerCase().includes(lowered))
+  }, [dateFilteredRows, searchTerm])
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE))
 
@@ -134,6 +185,37 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
     const start = (currentPage - 1) * PAGE_SIZE
     return filteredRows.slice(start, start + PAGE_SIZE)
   }, [filteredRows, currentPage])
+
+  const exportData = useMemo(
+    () =>
+      filteredRows
+        .filter((row) => !row.isDraft)
+        .map((row, index) => ({
+          "Sr No": index + 1,
+          Site: row.site,
+          Category: row.category,
+          "Main Head": row.mainHead,
+          Description: row.description,
+          Amount: row.amount,
+          Status: getDisplayStatus(row.expenseStatus),
+          "Approved By": getApprovedBy(
+            row.expenseStatus,
+            row.approvedByName,
+            row.approvedByEmail,
+            row.approvedByRole
+          ),
+          Approval: row.approvalStatus,
+          Action:
+            row.expenseStatus === "PENDING"
+              ? "Approve/Reject"
+              : row.expenseStatus === "APPROVED"
+                ? "Pay"
+                : row.expenseStatus === "PAID"
+                  ? "Paid"
+                  : "Rejected",
+        })),
+    [filteredRows]
+  )
 
   function addDraftEntry() {
     const id = `draft-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
@@ -146,6 +228,9 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
       createdAt: null,
       amount: 0,
       expenseStatus: "PENDING",
+      approvedByName: null,
+      approvedByEmail: null,
+      approvedByRole: null,
       verifyStatus: "PENDING",
       approvalStatus: "PENDING",
       isDraft: true,
@@ -179,6 +264,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
       setProcessingId(null)
       return
     }
+    void broadcastExpenseChange("admin-approve")
     router.refresh()
     setProcessingId(null)
   }
@@ -192,6 +278,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
       setProcessingId(null)
       return
     }
+    void broadcastExpenseChange("admin-reject")
     router.refresh()
     setProcessingId(null)
   }
@@ -205,6 +292,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
       setProcessingId(null)
       return
     }
+    void broadcastExpenseChange("admin-paid")
     router.refresh()
     setProcessingId(null)
   }
@@ -288,16 +376,50 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Input
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value)
-            setCurrentPage(1)
-          }}
-          placeholder="Search by Expense Head Request"
-          className="w-full sm:max-w-sm"
-        />
-        <Button onClick={addDraftEntry}>Add Entry</Button>
+        <div className="flex w-full flex-col gap-2 sm:max-w-2xl sm:flex-row sm:items-center">
+          <Input
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setCurrentPage(1)
+            }}
+            placeholder="Search by Expense Head Request"
+            className="w-full sm:max-w-sm"
+          />
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-600">From</span>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="w-full sm:w-40"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-600">To</span>
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(e) => {
+                setToDate(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="w-full sm:w-40"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <ExportExcelButton
+            data={exportData}
+            fileName="admin-expense-management"
+            sheetName="Expenses"
+            label="Export Excel"
+          />
+          <Button onClick={addDraftEntry}>Add Entry</Button>
+        </div>
       </div>
 
       <div className="w-full overflow-x-auto rounded-lg border border-gray-200 bg-white">
@@ -311,6 +433,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
               <th className="px-4 py-3 font-semibold">Description</th>
               <th className="px-4 py-3 font-semibold">Amount</th>
               <th className="px-4 py-3 font-semibold">Verified/Rejected/Pending</th>
+              <th className="px-4 py-3 font-semibold">Approved By</th>
               <th className="px-4 py-3 font-semibold">Approved/Pending</th>
               <th className="px-4 py-3 font-semibold">Action</th>
             </tr>
@@ -318,7 +441,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
           <tbody>
             {paginatedRows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-gray-500">
+                <td colSpan={10} className="px-4 py-10 text-center text-gray-500">
                   No entries found
                 </td>
               </tr>
@@ -401,6 +524,16 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
                     ) : (
                       getDisplayStatus(row.expenseStatus)
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">
+                    {row.isDraft
+                      ? "-"
+                      : getApprovedBy(
+                          row.expenseStatus,
+                          row.approvedByName,
+                          row.approvedByEmail,
+                          row.approvedByRole
+                        )}
                   </td>
                   <td className="px-4 py-3 text-gray-700">
                     {row.isDraft ? (

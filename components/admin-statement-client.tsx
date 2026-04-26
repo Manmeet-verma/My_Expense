@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { formatCurrency, formatDate } from "@/lib/utils"
+import { ExportExcelButton } from "@/components/export-excel-button"
 import { Search, CheckCircle, XCircle, Clock } from "lucide-react"
 
 interface Expense {
@@ -15,6 +16,12 @@ interface Expense {
   category: string
   status: "APPROVED" | "REJECTED" | "PENDING" | "PAID"
   createdAt: Date
+  approvedBy?: {
+    id: string
+    name: string | null
+    email: string
+    role: "ADMIN" | "SUPERVISOR" | "MEMBER"
+  } | null
 }
 
 interface AdminStatementClientProps {
@@ -25,6 +32,24 @@ function formatCategory(category: string): string {
   if (category === "OFFICE_GOODS") return "Office Goods"
   if (category === "FREIGHT") return "Freight/Gaddi"
   return category.charAt(0) + category.slice(1).toLowerCase().replace(/_/g, " ")
+}
+
+function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "MEMBER"): string {
+  if (role === "SUPERVISOR") return "Verifier"
+  if (role === "ADMIN") return "Admin"
+  return "Member"
+}
+
+function getApprovedBy(expense: Expense): string {
+  const { status, approvedBy } = expense
+  if (status === "PENDING") return "Pending"
+  if (approvedBy) {
+    const roleLabel = getRoleLabel(approvedBy.role)
+    const actor = approvedBy.name || approvedBy.email
+    return `${actor} (${roleLabel})`
+  }
+  if (status === "PAID") return "Admin (Admin)"
+  return "Verifier (Verifier)"
 }
 
 export function AdminStatementClient({ userId }: AdminStatementClientProps) {
@@ -75,6 +100,19 @@ export function AdminStatementClient({ userId }: AdminStatementClientProps) {
   const pendingTotal = pendingExpenses.reduce((sum, exp) => sum + exp.amount, 0)
   const currentExpenses = activeTab === "approved" ? approvedExpenses : activeTab === "rejected" ? rejectedExpenses : pendingExpenses
   const currentTotal = activeTab === "approved" ? approvedTotal : activeTab === "rejected" ? rejectedTotal : pendingTotal
+  const currentExportData = useMemo(
+    () =>
+      currentExpenses.map((expense, index) => ({
+        "Sr No": index + 1,
+        Date: formatDate(expense.createdAt),
+        Category: formatCategory(expense.category),
+        Description: expense.description || "-",
+        Amount: expense.amount,
+        Status: activeTab === "approved" ? "Approved" : activeTab === "rejected" ? "Rejected" : "Pending",
+        "Approved By": getApprovedBy(expense),
+      })),
+    [currentExpenses, activeTab]
+  )
 
   const statusColors = {
     approved: "bg-green-100 text-green-700 border-green-300",
@@ -154,6 +192,12 @@ export function AdminStatementClient({ userId }: AdminStatementClientProps) {
               <span className={`text-sm font-bold ${totalColor}`}>
                 {formatCurrency(currentTotal)}
               </span>
+              <ExportExcelButton
+                data={currentExportData}
+                fileName={`admin-statement-${activeTab}`}
+                sheetName="Statement"
+                label="Export Excel"
+              />
             </div>
           </div>
 
@@ -174,6 +218,7 @@ export function AdminStatementClient({ userId }: AdminStatementClientProps) {
                         <th className="px-3 py-2 font-semibold text-gray-600 text-right">Amount</th>
                         <th className="px-3 py-2 font-semibold text-gray-600 text-right">Day Total</th>
                         <th className="px-3 py-2 font-semibold text-gray-600">Status</th>
+                        <th className="px-3 py-2 font-semibold text-gray-600">Approved By</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -199,6 +244,7 @@ export function AdminStatementClient({ userId }: AdminStatementClientProps) {
                                 {activeTab === "approved" ? "Approved" : activeTab === "rejected" ? "Not Approved" : "Pending"}
                               </span>
                             </td>
+                            <td className="px-3 py-2 text-gray-700">{getApprovedBy(expense)}</td>
                           </tr>
                         )
                       })}

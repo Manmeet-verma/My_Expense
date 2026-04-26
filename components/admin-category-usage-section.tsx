@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { getCategoryMemberExpenses } from "@/actions/category"
 import { formatCurrency, formatDate } from "@/lib/utils"
+import { ExportExcelButton } from "@/components/export-excel-button"
 
 type Category = {
   id: string
@@ -31,6 +32,24 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  const categoryExportData = categories.map((category, index) => ({
+    "Sr No": index + 1,
+    Category: category.name,
+    Description: category.description || "-",
+    "Members Used": category.memberCount,
+    "Expense Count": category.expenseCount,
+    "Total Expense": category.totalAmount,
+  }))
+
+  const selectedCategoryExportData = memberExpenses.map((expense, index) => ({
+    "Sr No": index + 1,
+    Category: selectedCategory || "",
+    "Member Name": expense.memberName,
+    Description: expense.description || "-",
+    Amount: expense.amount,
+    Date: formatDate(expense.createdAt),
+  }))
+
   async function handleCategoryClick(categoryName: string) {
     setSelectedCategory(categoryName)
     setLoading(true)
@@ -51,6 +70,15 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <ExportExcelButton
+          data={categoryExportData}
+          fileName="category-usage-summary"
+          sheetName="CategoryUsage"
+          label="Export Category Excel"
+        />
+      </div>
+
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
         <table className="min-w-[760px] w-full text-xs sm:text-sm">
           <thead className="bg-gray-50 text-left text-gray-600">
@@ -92,10 +120,16 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
 
       {selectedCategory && (
         <div className="rounded-lg border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-4 py-3">
+          <div className="border-b border-gray-100 px-4 py-3 flex items-center justify-between gap-3">
             <h3 className="text-base font-semibold text-gray-900">
               Members Using Category: {selectedCategory}
             </h3>
+            <ExportExcelButton
+              data={selectedCategoryExportData}
+              fileName={`category-${selectedCategory}-details`}
+              sheetName="CategoryDetails"
+              label="Export Details"
+            />
           </div>
 
           <div className="p-4">

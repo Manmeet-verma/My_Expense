@@ -69,7 +69,7 @@ const deleteAdminSchema = z.object({
 })
 
 const deleteSupervisorSchema = z.object({
-  supervisorId: z.string().min(1, "Supervisor ID is required"),
+  supervisorId: z.string().min(1, "Verifier ID is required"),
 })
 
 const adminForgotPasswordSchema = z.object({
@@ -210,7 +210,7 @@ export async function createSupervisor(data: z.infer<typeof createSupervisorSche
   const session = await auth()
 
   if (!session?.user || session.user.role !== "ADMIN") {
-    return { error: "Only admins can create supervisor accounts" }
+    return { error: "Only admins can create verifier accounts" }
   }
 
   const result = createSupervisorSchema.safeParse(data)
@@ -327,7 +327,7 @@ export async function adminResetMemberPassword(data: z.infer<typeof adminResetMe
   const session = await auth()
 
   if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
-    return { error: "Only admins and supervisors can reset member passwords" }
+    return { error: "Only admins and verifiers can reset member passwords" }
   }
 
   const result = adminResetMemberPasswordSchema.safeParse(data)
@@ -528,7 +528,7 @@ export async function deleteSupervisor(data: z.infer<typeof deleteSupervisorSche
   const session = await auth()
 
   if (!session?.user || session.user.role !== "ADMIN") {
-    return { error: "Only admins can delete supervisor accounts" }
+    return { error: "Only admins can delete verifier accounts" }
   }
 
   const result = deleteSupervisorSchema.safeParse(data)
@@ -544,11 +544,11 @@ export async function deleteSupervisor(data: z.infer<typeof deleteSupervisorSche
   })
 
   if (!user) {
-    return { error: "Supervisor not found" }
+    return { error: "Verifier not found" }
   }
 
   if (user.role !== "SUPERVISOR") {
-    return { error: "Only supervisor accounts can be deleted" }
+    return { error: "Only verifier accounts can be deleted" }
   }
 
   await prisma.user.delete({
@@ -567,7 +567,7 @@ export async function deleteMember(data: z.infer<typeof deleteMemberSchema>) {
   const session = await auth()
 
   if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
-    return { error: "Only admins or supervisors can delete member accounts" }
+    return { error: "Only admins or verifiers can delete member accounts" }
   }
 
   const result = deleteMemberSchema.safeParse(data)

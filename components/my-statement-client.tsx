@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { Search, CheckCircle, XCircle, Clock, Plus, Wallet } from "lucide-react"
 import { createFund } from "@/actions/expense"
+import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,6 +20,14 @@ interface Expense {
   category: string
   status: "APPROVED" | "REJECTED" | "PENDING" | "PAID"
   createdAt: Date
+  approvedByName?: string | null
+  approvedByRole?: "ADMIN" | "SUPERVISOR" | "MEMBER" | null
+  approvedBy?: {
+    id: string
+    name: string | null
+    email: string
+    role: "ADMIN" | "SUPERVISOR" | "MEMBER"
+  } | null
 }
 
 interface MyStatementClientProps {
@@ -29,6 +38,30 @@ function formatCategory(category: string): string {
   if (category === "OFFICE_GOODS") return "Office Goods"
   if (category === "FREIGHT") return "Freight/Gaddi"
   return category.charAt(0) + category.slice(1).toLowerCase().replace(/_/g, " ")
+}
+
+function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "MEMBER"): string {
+  if (role === "SUPERVISOR") return "Verifier"
+  if (role === "ADMIN") return "Admin"
+  return "Member"
+}
+
+function getApprovedBy(expense: Expense): string {
+  const { status, approvedBy, approvedByName, approvedByRole } = expense
+  if (status === "PENDING") return "Pending"
+
+  if (approvedByName) {
+    const roleLabel = getRoleLabel(approvedByRole || approvedBy?.role || "SUPERVISOR")
+    return `${approvedByName} (${roleLabel})`
+  }
+
+  if (approvedBy) {
+    const roleLabel = getRoleLabel(approvedBy.role)
+    const actor = approvedBy.name || approvedBy.email
+    return `${actor} (${roleLabel})`
+  }
+  if (status === "PAID") return "Admin (Admin)"
+  return "Verifier (Verifier)"
 }
 
 function FundDepositModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -65,6 +98,7 @@ function FundDepositModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       return
     }
 
+    void broadcastExpenseChange("fund-create")
     setSuccess(true)
     setLoading(false)
     setTimeout(() => {
@@ -340,6 +374,7 @@ export function MyStatementClient({ userId }: MyStatementClientProps) {
                         <th className="px-3 py-2 font-semibold text-gray-600 text-right">Amount</th>
                         <th className="px-3 py-2 font-semibold text-gray-600 text-right">Day Total</th>
                         <th className="px-3 py-2 font-semibold text-gray-600">Status</th>
+                        <th className="px-3 py-2 font-semibold text-gray-600">Approved By</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -365,6 +400,7 @@ export function MyStatementClient({ userId }: MyStatementClientProps) {
                                 {activeTab === "approved" ? "Approved" : activeTab === "rejected" ? "Not Approved" : "Pending"}
                               </span>
                             </td>
+                            <td className="px-3 py-2 text-gray-700">{getApprovedBy(expense)}</td>
                           </tr>
                         )
                       })}

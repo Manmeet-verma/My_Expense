@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { distributeFund, getAllMembers } from "@/actions/expense"
+import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -55,6 +56,7 @@ export function FundDistributionForm() {
       return
     }
 
+    void broadcastExpenseChange("fund-distribute")
     setSuccess(true)
     setLoading(false)
     router.refresh()

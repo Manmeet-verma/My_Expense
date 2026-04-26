@@ -26,7 +26,7 @@ export function SupervisorSection({ supervisors }: SupervisorSectionProps) {
   const [error, setError] = useState("")
 
   async function handleDelete(supervisorId: string) {
-    if (!confirm("Are you sure you want to delete this supervisor?")) {
+    if (!confirm("Are you sure you want to delete this verifier?")) {
       return
     }
 
@@ -46,11 +46,11 @@ export function SupervisorSection({ supervisors }: SupervisorSectionProps) {
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Supervisor Accounts</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Verifier Accounts</h2>
         {!showCreateForm && (
           <Button onClick={() => setShowCreateForm(true)} size="sm">
             <UserPlus className="h-4 w-4 mr-2" />
-            Create New Supervisor
+            Create New Verifier
           </Button>
         )}
       </div>
@@ -131,7 +131,7 @@ export function SupervisorSection({ supervisors }: SupervisorSectionProps) {
         </div>
       ) : (
         <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-gray-500">
-          No supervisor accounts found
+          No verifier accounts found
         </div>
       )}
     </>

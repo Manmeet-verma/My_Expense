@@ -24,7 +24,7 @@ export default async function AdminPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Expense Review</h1>
-        <p className="mt-1 text-gray-600">Admin and supervisor can approve, reject, pay, and view the same expense workflow here.</p>
+        <p className="mt-1 text-gray-600">Admin and verifier can approve, reject, pay, and view the same expense workflow here.</p>
       </div>
 
       <div className="mb-8 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
@@ -44,7 +44,7 @@ export default async function AdminPage() {
 
       <AdminExpenseManagementTable
         expenses={expenses}
-        totalReceivedAmount={session.user.role === "ADMIN" ? stats?.collectionAmount ?? 0 : 0}
+        totalReceivedAmount={stats?.collectionAmount ?? 0}
       />
     </div>
   )

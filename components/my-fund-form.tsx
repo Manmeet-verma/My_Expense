@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { createFund } from "@/actions/expense"
+import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { formatDate } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
 
@@ -44,6 +45,7 @@ export function MyFundForm() {
       return
     }
 
+    void broadcastExpenseChange("fund-create")
     setSuccess(true)
     setLoading(false)
     setTimeout(() => {

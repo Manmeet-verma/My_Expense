@@ -40,8 +40,8 @@ function getStatusBadgeVariant(status: Exclude<DisplayStatus, "ALL">): "warning"
 
 function actionTakenBy(status: Exclude<DisplayStatus, "ALL">): string {
   if (status === "PENDING") return "Pending Review"
-  if (status === "APPROVED") return "Supervisor"
-  if (status === "REJECTED") return "Supervisor"
+  if (status === "APPROVED") return "Verifier"
+  if (status === "REJECTED") return "Verifier"
   return "Admin"
 }
 

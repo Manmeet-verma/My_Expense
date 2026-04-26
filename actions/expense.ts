@@ -103,6 +103,14 @@ export async function getAllExpenses() {
           totalBudget: true,
         },
       },
+      approvedBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   })
@@ -199,7 +207,7 @@ export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema
   const session = await auth()
   
   if (!session?.user || (session.user.role !== "SUPERVISOR" && session.user.role !== "ADMIN")) {
-    return { error: "Unauthorized - Admin or Supervisor access required" }
+    return { error: "Unauthorized - Admin or Verifier access required" }
   }
 
   const result = approvalSchema.safeParse(data)
@@ -227,6 +235,9 @@ export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema
     data: {
       status,
       adminRemark,
+      approvedById: session.user.id,
+      approvedByName: session.user.name || session.user.email,
+      approvedByRole: session.user.role,
     },
   })
 
@@ -267,6 +278,9 @@ export async function markExpensePaid(data: z.infer<typeof paymentSchema>) {
     where: { id },
     data: {
       status: "PAID",
+      approvedById: session.user.id,
+      approvedByName: session.user.name || session.user.email,
+      approvedByRole: session.user.role,
     },
   })
 

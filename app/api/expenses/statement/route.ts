@@ -35,6 +35,16 @@ export async function GET(request: NextRequest) {
         status: status as "APPROVED" | "REJECTED" | "PENDING" | "PAID",
         createdById: userId || session.user.id,
       },
+      include: {
+        approvedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },

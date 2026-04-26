@@ -29,7 +29,8 @@ model User {
   receivedAmount Float   @default(0)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  expenses     Expense[]
+  expenses     Expense[] @relation("ExpenseCreatedBy")
+  approvedExpenses Expense[] @relation("ExpenseApprovedBy")
   funds        Fund[]
 }
 
@@ -42,10 +43,14 @@ model Expense {
   category     String
   status       ExpenseStatus   @default(PENDING)
   adminRemark  String?
+  approvedByName String?
+  approvedByRole Role?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   createdById  String
-  createdBy    User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy    User     @relation("ExpenseCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  approvedById String?
+  approvedBy   User?    @relation("ExpenseApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
 }
 
 enum PaymentMode {

@@ -15,6 +15,14 @@ interface Expense {
   category: string
   status: "APPROVED" | "REJECTED" | "PENDING" | "PAID"
   createdAt: Date
+  approvedByName?: string | null
+  approvedByRole?: "ADMIN" | "SUPERVISOR" | "MEMBER" | null
+  approvedBy?: {
+    id: string
+    name: string | null
+    email: string
+    role: "ADMIN" | "SUPERVISOR" | "MEMBER"
+  } | null
 }
 
 interface Fund {
@@ -50,6 +58,30 @@ function formatCategory(category: string): string {
   if (category === "OFFICE_GOODS") return "Office Goods"
   if (category === "FREIGHT") return "Freight/Gaddi"
   return category.charAt(0) + category.slice(1).toLowerCase().replace(/_/g, " ")
+}
+
+function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "MEMBER"): string {
+  if (role === "SUPERVISOR") return "Verifier"
+  if (role === "ADMIN") return "Admin"
+  return "Member"
+}
+
+function getApprovedBy(expense: Expense): string {
+  const { status, approvedBy, approvedByName, approvedByRole } = expense
+  if (status === "PENDING") return "Pending"
+
+  if (approvedByName) {
+    const roleLabel = getRoleLabel(approvedByRole || approvedBy?.role || "SUPERVISOR")
+    return `${approvedByName} (${roleLabel})`
+  }
+
+  if (approvedBy) {
+    const roleLabel = getRoleLabel(approvedBy.role)
+    const actor = approvedBy.name || approvedBy.email
+    return `${actor} (${roleLabel})`
+  }
+  if (status === "PAID") return "Admin (Admin)"
+  return "Verifier (Verifier)"
 }
 
 export function StatementClient({ userId }: { userId: string }) {
@@ -307,6 +339,7 @@ export function StatementClient({ userId }: { userId: string }) {
                         <th className="px-2 py-1.5 font-medium text-gray-600">Description</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600 text-right">Amount</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600">Status</th>
+                        <th className="px-2 py-1.5 font-medium text-gray-600">Approved By</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -328,6 +361,7 @@ export function StatementClient({ userId }: { userId: string }) {
                               {expense.status === "REJECTED" ? "Not Approved" : expense.status}
                             </span>
                           </td>
+                          <td className="px-2 py-1.5 text-gray-700">{getApprovedBy(expense)}</td>
                         </tr>
                       ))}
                     </tbody>

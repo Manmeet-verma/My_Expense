@@ -8,6 +8,7 @@ import {
 } from "@/actions/expense"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ExportExcelButton } from "@/components/export-excel-button"
 import { formatCurrency } from "@/lib/utils"
 
 type Transaction = {
@@ -64,6 +65,19 @@ export function AdminDistributionTransactionsTable({
 
   const transactionMap = useMemo(
     () => new Map(transactions.map((transaction) => [transaction.id, transaction])),
+    [transactions]
+  )
+
+  const exportData = useMemo(
+    () =>
+      transactions.map((transaction, index) => ({
+        "Sr No": index + 1,
+        Member: transaction.user.name || transaction.user.email,
+        Amount: transaction.amount,
+        Description: transaction.description || "-",
+        "Payment Method": formatPaymentMode(transaction.paymentMode),
+        "Transaction Date": formatDateTime(transaction.fundDate || transaction.createdAt),
+      })),
     [transactions]
   )
 
@@ -151,6 +165,15 @@ export function AdminDistributionTransactionsTable({
   return (
     <div>
       {error && <div className="mb-3 rounded bg-red-50 p-3 text-sm text-red-600">{error}</div>}
+
+      <div className="mb-3 flex justify-end">
+        <ExportExcelButton
+          data={exportData}
+          fileName="fund-distribution-transactions"
+          sheetName="Transactions"
+          label="Export Excel"
+        />
+      </div>
 
       <div className="space-y-3 md:hidden">
         {transactions.map((transaction) => {
