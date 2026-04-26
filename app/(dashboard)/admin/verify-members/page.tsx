@@ -33,9 +33,9 @@ export default async function VerifyMembersPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Member Password Verification</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Inputter Password Verification</h1>
         <p className="mt-1 text-gray-600">
-          Check which members have valid passwords set up for login
+          Check which inputters have valid passwords set up for login
         </p>
       </div>
 
@@ -43,7 +43,7 @@ export default async function VerifyMembersPage() {
         <div className="flex items-start gap-3">
           <AlertCircle className="h-5 w-5 mt-0.5 text-blue-600 flex-shrink-0" />
           <p className="text-sm text-blue-900">
-            If a member shows &quot;No Password&quot;, use the Reset Member Password feature to set one.
+            If an inputter shows &quot;No Password&quot;, use the Reset Inputter Password feature to set one.
           </p>
         </div>
       </div>
@@ -52,7 +52,7 @@ export default async function VerifyMembersPage() {
         {members.length === 0 ? (
           <Card>
             <CardContent className="pt-6 text-center text-gray-500">
-              No members found
+              No inputters found
             </CardContent>
           </Card>
         ) : (

@@ -26,8 +26,8 @@ export default async function FundDistributionPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <div className="mb-5 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Distribute Fund to Members</h1>
-        <p className="text-gray-600 mt-1">Give money to members from the admin account</p>
+        <h1 className="text-2xl font-bold text-gray-900">Distribute Fund to Inputters</h1>
+        <p className="text-gray-600 mt-1">Give money to inputters from the admin account</p>
       </div>
 
       <div className="space-y-4">

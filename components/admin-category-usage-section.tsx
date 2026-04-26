@@ -36,7 +36,7 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
     "Sr No": index + 1,
     Category: category.name,
     Description: category.description || "-",
-    "Members Used": category.memberCount,
+    "Inputters Used": category.memberCount,
     "Expense Count": category.expenseCount,
     "Total Expense": category.totalAmount,
   }))
@@ -44,7 +44,7 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
   const selectedCategoryExportData = memberExpenses.map((expense, index) => ({
     "Sr No": index + 1,
     Category: selectedCategory || "",
-    "Member Name": expense.memberName,
+    "Inputter Name": expense.memberName,
     Description: expense.description || "-",
     Amount: expense.amount,
     Date: formatDate(expense.createdAt),
@@ -85,7 +85,7 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
             <tr>
               <th className="px-4 py-3 font-semibold">Category</th>
               <th className="px-4 py-3 font-semibold">Description</th>
-              <th className="px-4 py-3 font-semibold">Members Used</th>
+              <th className="px-4 py-3 font-semibold">Inputters Used</th>
               <th className="px-4 py-3 font-semibold">Expense Count</th>
               <th className="px-4 py-3 font-semibold">Total Expense</th>
             </tr>
@@ -122,7 +122,7 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
         <div className="rounded-lg border border-gray-200 bg-white">
           <div className="border-b border-gray-100 px-4 py-3 flex items-center justify-between gap-3">
             <h3 className="text-base font-semibold text-gray-900">
-              Members Using Category: {selectedCategory}
+              Inputters Using Category: {selectedCategory}
             </h3>
             <ExportExcelButton
               data={selectedCategoryExportData}
@@ -139,14 +139,14 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
               <div className="py-8 text-center text-sm text-gray-500">Loading...</div>
             ) : memberExpenses.length === 0 ? (
               <div className="py-8 text-center text-sm text-gray-500">
-                No member expenses found for this category
+                No inputter expenses found for this category
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-[700px] w-full text-xs sm:text-sm">
                   <thead className="bg-gray-50 text-left text-gray-600">
                     <tr>
-                      <th className="px-4 py-3 font-semibold">Member Name</th>
+                      <th className="px-4 py-3 font-semibold">Inputter Name</th>
                       <th className="px-4 py-3 font-semibold">Description</th>
                       <th className="px-4 py-3 font-semibold">Amount</th>
                       <th className="px-4 py-3 font-semibold">Date</th>
@@ -154,7 +154,7 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
                   </thead>
                   <tbody>
                     {memberExpenses.map((expense) => (
-                      <tr key={expense.id} className="border-t border-gray-100">
+                      <tr key={expense.id} className="border-t border-gray-100 odd:bg-gray-50">
                         <td className="px-4 py-3 text-gray-900 font-medium">{expense.memberName}</td>
                         <td className="px-4 py-3 text-gray-700">{expense.description || "-"}</td>
                         <td className="px-4 py-3 text-gray-900">{formatCurrency(expense.amount)}</td>

@@ -11,6 +11,8 @@ import { UserPlus, Trash2 } from "lucide-react"
 type Supervisor = {
   id: string
   name: string | null
+  fatherName: string | null
+  aadhaarNo: string | null
   email: string
   createdAt: Date
 }
@@ -78,6 +80,8 @@ export function SupervisorSection({ supervisors }: SupervisorSectionProps) {
             {supervisors.map((supervisor) => (
               <div key={supervisor.id} className="rounded-lg border border-gray-200 p-3">
                 <p className="text-sm font-semibold text-gray-900">{supervisor.name || "N/A"}</p>
+                <p className="mt-1 text-sm text-gray-700">Father: {supervisor.fatherName || "N/A"}</p>
+                <p className="mt-1 text-sm text-gray-700">Aadhaar: {supervisor.aadhaarNo || "N/A"}</p>
                 <p className="mt-1 text-sm text-gray-700">{supervisor.email}</p>
                 <p className="mt-1 text-xs text-gray-500">Created: {formatDate(supervisor.createdAt)}</p>
 
@@ -100,6 +104,8 @@ export function SupervisorSection({ supervisors }: SupervisorSectionProps) {
             <thead className="bg-gray-50 text-left text-gray-600">
               <tr>
                 <th className="px-4 py-3 font-semibold">Name</th>
+                <th className="px-4 py-3 font-semibold">Father's Name</th>
+                <th className="px-4 py-3 font-semibold">Aadhaar No.</th>
                 <th className="px-4 py-3 font-semibold">Email</th>
                 <th className="px-4 py-3 font-semibold">Created</th>
                 <th className="px-4 py-3 font-semibold">Delete</th>
@@ -107,8 +113,10 @@ export function SupervisorSection({ supervisors }: SupervisorSectionProps) {
             </thead>
             <tbody>
               {supervisors.map((supervisor) => (
-                <tr key={supervisor.id} className="border-t border-gray-100">
+                <tr key={supervisor.id} className="border-t border-gray-100 odd:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{supervisor.name || "N/A"}</td>
+                  <td className="px-4 py-3 text-gray-700">{supervisor.fatherName || "N/A"}</td>
+                  <td className="px-4 py-3 text-gray-700">{supervisor.aadhaarNo || "N/A"}</td>
                   <td className="px-4 py-3 text-gray-700">{supervisor.email}</td>
                   <td className="px-4 py-3 text-gray-700">{formatDate(supervisor.createdAt)}</td>
                   <td className="px-4 py-3">

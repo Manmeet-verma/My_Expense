@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, LogOut, Users, Wallet, PanelLeft, FileText, List, UserPlus, Tags } from "lucide-react"
+import { LayoutDashboard, LogOut, Users, Wallet, PanelLeft, FileText, List, UserPlus, Tags, UserRound } from "lucide-react"
 
 interface NavProps {
   user: {
@@ -22,7 +22,7 @@ export function Navigation({ user }: NavProps) {
   const isAdmin = user.role === "ADMIN"
   const isSupervisor = user.role === "SUPERVISOR"
   const isAdminOrSupervisor = isAdmin || isSupervisor
-  const roleLabel = user.role === "SUPERVISOR" ? "VERIFIER" : user.role
+  const roleLabel = user.role === "SUPERVISOR" ? "VERIFIER" : user.role === "MEMBER" ? "INPUTTER" : user.role
 
   const navItems = [
     {
@@ -60,6 +60,12 @@ export function Navigation({ user }: NavProps) {
       label: "Expense Review",
       icon: Users,
       visible: isAdminOrSupervisor,
+    },
+    {
+      href: "/admin/members",
+      label: "Inputter List",
+      icon: UserRound,
+      visible: isSupervisor,
     },
     {
       href: "/admin/create-supervisor",

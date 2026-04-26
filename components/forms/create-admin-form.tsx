@@ -30,6 +30,8 @@ export function CreateAdminForm({ onSuccess, onCancel }: CreateAdminFormProps) {
     const data = {
       email: formData.get("email") as string,
       name: formData.get("name") as string,
+      fatherName: formData.get("fatherName") as string,
+      aadhaarNo: formData.get("aadhaarNo") as string,
       password: formData.get("password") as string,
     }
 
@@ -87,6 +89,29 @@ export function CreateAdminForm({ onSuccess, onCancel }: CreateAdminFormProps) {
               name="email"
               type="email"
               placeholder="admin@example.com"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="admin-father-name">Father's Name</Label>
+            <Input
+              id="admin-father-name"
+              name="fatherName"
+              type="text"
+              placeholder="Father's Name"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="admin-aadhaar">Aadhaar No.</Label>
+            <Input
+              id="admin-aadhaar"
+              name="aadhaarNo"
+              type="text"
+              inputMode="numeric"
+              pattern="\\d{12}"
+              maxLength={12}
+              placeholder="12-digit Aadhaar number"
               required
             />
           </div>

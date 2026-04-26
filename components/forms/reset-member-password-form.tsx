@@ -40,7 +40,7 @@ export function ResetMemberPasswordForm({ members }: ResetMemberPasswordFormProp
     const confirmPassword = formData.get("confirmPassword") as string
 
     if (!email) {
-      setError("Please select a member or enter an email")
+      setError("Please select an inputter or enter an email")
       setLoading(false)
       return
     }
@@ -61,15 +61,15 @@ export function ResetMemberPasswordForm({ members }: ResetMemberPasswordFormProp
 
     form.reset()
     setSelectedEmail("")
-    setSuccess("Member password reset successfully")
+    setSuccess("Inputter password reset successfully")
     setLoading(false)
   }
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Reset Member Password</CardTitle>
-        <CardDescription>Admin and verifier access: reset a member account password</CardDescription>
+        <CardTitle className="text-2xl font-bold">Reset Inputter Password</CardTitle>
+        <CardDescription>Admin and verifier access: reset an inputter account password</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-4">
@@ -77,13 +77,13 @@ export function ResetMemberPasswordForm({ members }: ResetMemberPasswordFormProp
           {success && <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">{success}</div>}
 
           <div className="space-y-2">
-            <Label htmlFor="memberSelect">Select Member</Label>
+            <Label htmlFor="memberSelect">Select Inputter</Label>
             <Select
               id="memberSelect"
               value={selectedEmail}
               onChange={(e) => setSelectedEmail(e.target.value)}
             >
-              <option value="">-- Select a member --</option>
+              <option value="">-- Select an inputter --</option>
               {members.map((member) => (
                 <option key={member.id} value={member.email}>
                   {member.name || member.email} ({member.email})
@@ -103,7 +103,7 @@ export function ResetMemberPasswordForm({ members }: ResetMemberPasswordFormProp
               id="email"
               name="email"
               type="email"
-              placeholder="member@example.com"
+              placeholder="inputter@example.com"
               value={selectedEmail ? "" : ""}
               onChange={(e) => {
                 if (!selectedEmail) {

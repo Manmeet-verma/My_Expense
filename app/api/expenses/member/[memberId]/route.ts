@@ -19,7 +19,7 @@ export async function GET(_request: Request, context: RouteContext) {
     const { memberId } = await context.params
 
     if (!memberId) {
-      return NextResponse.json({ error: "Member ID is required" }, { status: 400 })
+      return NextResponse.json({ error: "Inputter ID is required" }, { status: 400 })
     }
 
     const expenses = await prisma.expense.findMany({
@@ -58,7 +58,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     return NextResponse.json({ approved, rejected, pending })
   } catch (error) {
-    console.error("Failed to fetch member expenses:", error)
-    return NextResponse.json({ error: "Failed to fetch member expenses" }, { status: 500 })
+    console.error("Failed to fetch inputter expenses:", error)
+    return NextResponse.json({ error: "Failed to fetch inputter expenses" }, { status: 500 })
   }
 }

@@ -32,7 +32,7 @@ export function FundDistributionForm() {
     return (
       <div className="text-center py-8">
         <Button onClick={loadMembers} variant="outline">
-          Load Members
+          Load Inputters
         </Button>
       </div>
     )
@@ -91,7 +91,7 @@ export function FundDistributionForm() {
       )}
 
       <div>
-        <Label htmlFor="member">Select Member *</Label>
+        <Label htmlFor="member">Select Inputter *</Label>
         <select
           id="member"
           value={selectedMember}
@@ -99,7 +99,7 @@ export function FundDistributionForm() {
           className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
           required
         >
-          <option value="">Select a member</option>
+          <option value="">Select an inputter</option>
           {members.map((member) => (
             <option key={member.id} value={member.id}>
               {member.name || member.email}

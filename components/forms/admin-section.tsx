@@ -12,6 +12,8 @@ import { UserPlus, Trash2 } from "lucide-react"
 type Admin = {
   id: string
   name: string | null
+  fatherName: string | null
+  aadhaarNo: string | null
   email: string
   createdAt: Date
 }
@@ -86,6 +88,8 @@ export function AdminSection({ admins, currentAdminId }: AdminSectionProps) {
                     <span className="ml-2 text-xs text-blue-600">(You)</span>
                   )}
                 </p>
+                <p className="mt-1 text-sm text-gray-700">Father: {admin.fatherName || "N/A"}</p>
+                <p className="mt-1 text-sm text-gray-700">Aadhaar: {admin.aadhaarNo || "N/A"}</p>
                 <p className="mt-1 text-sm text-gray-700">{admin.email}</p>
                 <p className="mt-1 text-xs text-gray-500">Created: {formatDate(admin.createdAt)}</p>
 
@@ -110,6 +114,8 @@ export function AdminSection({ admins, currentAdminId }: AdminSectionProps) {
             <thead className="bg-gray-50 text-left text-gray-600">
               <tr>
                 <th className="px-4 py-3 font-semibold">Name</th>
+                <th className="px-4 py-3 font-semibold">Father's Name</th>
+                <th className="px-4 py-3 font-semibold">Aadhaar No.</th>
                 <th className="px-4 py-3 font-semibold">Email</th>
                 <th className="px-4 py-3 font-semibold">Created</th>
                 <th className="px-4 py-3 font-semibold">Delete</th>
@@ -117,13 +123,15 @@ export function AdminSection({ admins, currentAdminId }: AdminSectionProps) {
             </thead>
             <tbody>
               {admins.map((admin) => (
-                <tr key={admin.id} className="border-t border-gray-100">
+                <tr key={admin.id} className="border-t border-gray-100 odd:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">
                     {admin.name || "N/A"}
                     {admin.id === currentAdminId && (
                       <span className="ml-2 text-xs text-blue-600">(You)</span>
                     )}
                   </td>
+                  <td className="px-4 py-3 text-gray-700">{admin.fatherName || "N/A"}</td>
+                  <td className="px-4 py-3 text-gray-700">{admin.aadhaarNo || "N/A"}</td>
                   <td className="px-4 py-3 text-gray-700">{admin.email}</td>
                   <td className="px-4 py-3 text-gray-700">{formatDate(admin.createdAt)}</td>
                   <td className="px-4 py-3">

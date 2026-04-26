@@ -39,7 +39,7 @@ export async function createExpense(data: z.infer<typeof expenseSchema>) {
   }
 
   if (session.user.role !== "MEMBER") {
-    return { error: "Only members can create expenses" }
+    return { error: "Only inputters can create expenses" }
   }
 
   const result = expenseSchema.safeParse(data)
@@ -124,7 +124,7 @@ export async function updateExpense(id: string, data: z.infer<typeof expenseSche
   }
 
   if (session.user.role !== "MEMBER") {
-    return { error: "Only members can edit expenses" }
+    return { error: "Only inputters can edit expenses" }
   }
 
   const expense = await prisma.expense.findUnique({
@@ -176,7 +176,7 @@ export async function deleteExpense(id: string) {
   }
 
   if (session.user.role !== "MEMBER") {
-    return { error: "Only members can delete expenses" }
+    return { error: "Only inputters can delete expenses" }
   }
 
   const expense = await prisma.expense.findUnique({
@@ -491,7 +491,7 @@ export async function createFund(data: z.infer<typeof fundSchema>) {
   }
 
   if (session.user.role !== "MEMBER") {
-    return { error: "Only members can deposit funds" }
+    return { error: "Only inputters can deposit funds" }
   }
 
   const result = fundSchema.safeParse(data)
@@ -536,7 +536,7 @@ export async function getMyFunds() {
 }
 
 const distributeFundSchema = z.object({
-  memberId: z.string().min(1, "Member ID is required"),
+  memberId: z.string().min(1, "Inputter ID is required"),
   amount: z.number().positive("Amount must be positive"),
   description: optionalStringSchema,
   paymentMode: z.enum(["CASH", "GPAY", "BANK_ACCOUNT"]),
@@ -608,7 +608,7 @@ export async function distributeFund(data: z.infer<typeof distributeFundSchema>)
   })
 
   if (!member) {
-    return { error: "Member not found" }
+    return { error: "Inputter not found" }
   }
 
   const distributedBy = session.user.name || session.user.email

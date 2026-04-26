@@ -6,6 +6,8 @@ import MembersContent from "./members-content"
 type MemberRow = {
   id: string
   name: string | null
+  fatherName: string | null
+  aadhaarNo: string | null
   email: string
   receivedAmount: number
   totalEdits: number

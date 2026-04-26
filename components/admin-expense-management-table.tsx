@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from "react"
+import type { ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { approveOrRejectExpense, markExpensePaid } from "@/actions/expense"
 import { broadcastExpenseChange } from "@/lib/supabase/realtime"
@@ -35,6 +36,7 @@ interface ExpenseRow {
 
 interface AdminExpenseManagementTableProps {
   totalReceivedAmount: number
+  afterCardsContent?: ReactNode
   expenses: Array<{
     id: string
     title: string
@@ -86,7 +88,7 @@ function getDisplayStatus(status: ExpenseStatus): DisplayStatus {
 function getRoleLabel(role: ApproverRole): string {
   if (role === "SUPERVISOR") return "Verifier"
   if (role === "ADMIN") return "Admin"
-  return "Member"
+  return "Inputter"
 }
 
 function getApprovedBy(
@@ -107,7 +109,7 @@ function getApprovedBy(
   return "Verifier (Verifier)"
 }
 
-export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: AdminExpenseManagementTableProps) {
+export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsContent, expenses }: AdminExpenseManagementTableProps) {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [fromDate, setFromDate] = useState("")
@@ -318,7 +320,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
           }}
           className={`rounded-lg border p-4 text-left transition ${dashboardFilter === "rejected" ? "border-red-400 bg-red-50" : "border-gray-200 bg-white"}`}
         >
-          <p className="text-xs text-gray-600">Total Unapproved Exp. - Req.</p>
+          <p className="text-xs text-gray-600">Total Rejected Exp. - Req.</p>
           <p className="mt-1 text-xl font-bold text-red-700">{formatCurrency(amounts.rejected)}</p>
         </button>
 
@@ -374,6 +376,8 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
           Paid Head: {formatCurrency(amounts.paid)}
         </button>
       </div>
+
+      {afterCardsContent ? <div>{afterCardsContent}</div> : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex w-full flex-col gap-2 sm:max-w-2xl sm:flex-row sm:items-center">
@@ -447,7 +451,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, expenses }: A
               </tr>
             ) : (
               paginatedRows.map((row, index) => (
-                <tr key={row.id} className="border-t border-gray-100 align-top">
+                <tr key={row.id} className="border-t border-gray-100 align-top odd:bg-gray-50">
                   <td className="px-4 py-3 text-gray-700">{(currentPage - 1) * PAGE_SIZE + index + 1}</td>
                   <td className="px-4 py-3 text-gray-700">
                     {row.isDraft ? (

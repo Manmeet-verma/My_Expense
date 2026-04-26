@@ -6,14 +6,14 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
 const deleteMemberSchema = z.object({
-  memberId: z.string().min(1, "Member ID is required"),
+  memberId: z.string().min(1, "Inputter ID is required"),
 })
 
 export async function deleteMember(data: z.infer<typeof deleteMemberSchema>) {
   const session = await auth()
 
   if (!session?.user || session.user.role !== "ADMIN") {
-    return { error: "Only admins can delete member accounts" }
+    return { error: "Only admins can delete inputter accounts" }
   }
 
   const result = deleteMemberSchema.safeParse(data)
@@ -33,15 +33,15 @@ export async function deleteMember(data: z.infer<typeof deleteMemberSchema>) {
   })
 
   if (!user) {
-    return { error: "Member not found" }
+    return { error: "Inputter not found" }
   }
 
   if (user.role !== "MEMBER") {
-    return { error: "Only member accounts can be deleted" }
+    return { error: "Only inputter accounts can be deleted" }
   }
 
   if (user._count.expenses > 0) {
-    return { error: "This member has expense data. Use password reset instead of deleting the account." }
+    return { error: "This inputter has expense data. Use password reset instead of deleting the account." }
   }
 
   await prisma.user.delete({

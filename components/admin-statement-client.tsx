@@ -37,7 +37,7 @@ function formatCategory(category: string): string {
 function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "MEMBER"): string {
   if (role === "SUPERVISOR") return "Verifier"
   if (role === "ADMIN") return "Admin"
-  return "Member"
+  return "Inputter"
 }
 
 function getApprovedBy(expense: Expense): string {
@@ -227,7 +227,7 @@ export function AdminStatementClient({ userId }: AdminStatementClientProps) {
                           .filter(e => formatDate(e.createdAt) === formatDate(expense.createdAt))
                           .reduce((sum, e) => sum + e.amount, 0)
                         return (
-                          <tr key={expense.id} className="hover:bg-gray-50">
+                          <tr key={expense.id} className="hover:bg-gray-50 odd:bg-gray-50">
                             <td className="px-3 py-2 text-gray-700">{formatDate(expense.createdAt)}</td>
                             <td className="px-3 py-2 text-gray-700">{formatCategory(expense.category)}</td>
                             <td className="px-3 py-2 text-gray-700">{expense.description || "-"}</td>

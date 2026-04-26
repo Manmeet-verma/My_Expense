@@ -26,6 +26,8 @@ export function SignupForm() {
     const data = {
       email: formData.get("email") as string,
       name: formData.get("name") as string,
+      fatherName: formData.get("fatherName") as string,
+      aadhaarNo: formData.get("aadhaarNo") as string,
       password: formData.get("password") as string,
     }
 
@@ -45,7 +47,7 @@ export function SignupForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-        <CardDescription>Create a member account</CardDescription>
+        <CardDescription>Create an inputter account</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-4">
@@ -71,6 +73,29 @@ export function SignupForm() {
               name="email"
               type="email"
               placeholder="you@example.com"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="fatherName">Father's Name</Label>
+            <Input
+              id="fatherName"
+              name="fatherName"
+              type="text"
+              placeholder="Father's Name"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="aadhaarNo">Aadhaar No.</Label>
+            <Input
+              id="aadhaarNo"
+              name="aadhaarNo"
+              type="text"
+              inputMode="numeric"
+              pattern="\\d{12}"
+              maxLength={12}
+              placeholder="12-digit Aadhaar number"
               required
             />
           </div>

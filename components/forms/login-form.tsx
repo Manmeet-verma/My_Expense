@@ -104,7 +104,7 @@ export function LoginForm() {
             <Link href="/forgot-password" className="text-blue-600 hover:underline">
               Forgot Password?
             </Link>
-            <p className="text-gray-600">Contact your admin to create a member account.</p>
+            <p className="text-gray-600">Contact your admin to create an inputter account.</p>
             <Link href="/signup" className="text-blue-600 hover:underline font-medium">
               Create an account
             </Link>

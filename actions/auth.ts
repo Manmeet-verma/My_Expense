@@ -31,18 +31,24 @@ export async function checkIsAdminEmail(email: string) {
 const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
   name: z.string().min(2, "Name must be at least 2 characters"),
+  fatherName: z.string().min(2, "Father's name must be at least 2 characters"),
+  aadhaarNo: z.string().regex(/^\d{12}$/, "Aadhaar No must be exactly 12 digits"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 })
 
 const createAdminSchema = z.object({
   email: z.string().email("Invalid email address"),
   name: z.string().min(2, "Name must be at least 2 characters"),
+  fatherName: z.string().min(2, "Father's name must be at least 2 characters"),
+  aadhaarNo: z.string().regex(/^\d{12}$/, "Aadhaar No must be exactly 12 digits"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 })
 
 const createSupervisorSchema = z.object({
   email: z.string().email("Invalid email address"),
   name: z.string().min(2, "Name must be at least 2 characters"),
+  fatherName: z.string().min(2, "Father's name must be at least 2 characters"),
+  aadhaarNo: z.string().regex(/^\d{12}$/, "Aadhaar No must be exactly 12 digits"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 })
 
@@ -61,7 +67,7 @@ const adminResetMemberPasswordSchema = z.object({
 })
 
 const deleteMemberSchema = z.object({
-  memberId: z.string().min(1, "Member ID is required"),
+  memberId: z.string().min(1, "Inputter ID is required"),
 })
 
 const deleteAdminSchema = z.object({
@@ -86,17 +92,19 @@ const forgotPasswordSchema = z.object({
 const publicSignupSchema = z.object({
   email: z.string().email("Invalid email address"),
   name: z.string().min(2, "Name must be at least 2 characters"),
+  fatherName: z.string().min(2, "Father's name must be at least 2 characters"),
+  aadhaarNo: z.string().regex(/^\d{12}$/, "Aadhaar No must be exactly 12 digits"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 })
 
 const verifyMemberPasswordSchema = z.object({
-  memberId: z.string().min(1, "Member ID is required"),
+  memberId: z.string().min(1, "Inputter ID is required"),
 })
 export async function signup(data: z.infer<typeof signupSchema>) {
   const session = await auth()
 
   if (!session?.user || session.user.role !== "ADMIN") {
-    return { error: "Only admins can create member accounts" }
+    return { error: "Only admins can create inputter accounts" }
   }
 
   const result = signupSchema.safeParse(data)
@@ -105,7 +113,7 @@ export async function signup(data: z.infer<typeof signupSchema>) {
     return { error: result.error.issues[0].message }
   }
 
-  const { email, name, password } = result.data
+  const { email, name, fatherName, aadhaarNo, password } = result.data
   const normalizedEmail = email.trim().toLowerCase()
 
   const existingUser = await prisma.user.findUnique({
@@ -122,6 +130,8 @@ export async function signup(data: z.infer<typeof signupSchema>) {
     data: {
       email: normalizedEmail,
       name,
+      fatherName,
+      aadhaarNo,
       password: hashedPassword,
       role: "MEMBER",
     },
@@ -140,7 +150,7 @@ export async function publicSignup(data: z.infer<typeof publicSignupSchema>) {
     return { error: result.error.issues[0].message }
   }
 
-  const { email, name, password } = result.data
+  const { email, name, fatherName, aadhaarNo, password } = result.data
   const normalizedEmail = email.trim().toLowerCase()
 
   const existingUser = await prisma.user.findUnique({
@@ -157,6 +167,8 @@ export async function publicSignup(data: z.infer<typeof publicSignupSchema>) {
     data: {
       email: normalizedEmail,
       name,
+      fatherName,
+      aadhaarNo,
       password: hashedPassword,
       role: "MEMBER",
     },
@@ -179,7 +191,7 @@ export async function createAdmin(data: z.infer<typeof createAdminSchema>) {
     return { error: result.error.issues[0].message }
   }
 
-  const { email, name, password } = result.data
+  const { email, name, fatherName, aadhaarNo, password } = result.data
   const normalizedEmail = email.trim().toLowerCase()
 
   const existingUser = await prisma.user.findUnique({
@@ -196,6 +208,8 @@ export async function createAdmin(data: z.infer<typeof createAdminSchema>) {
     data: {
       email: normalizedEmail,
       name,
+      fatherName,
+      aadhaarNo,
       password: hashedPassword,
       role: "ADMIN",
     },
@@ -219,7 +233,7 @@ export async function createSupervisor(data: z.infer<typeof createSupervisorSche
     return { error: result.error.issues[0].message }
   }
 
-  const { email, name, password } = result.data
+  const { email, name, fatherName, aadhaarNo, password } = result.data
   const normalizedEmail = email.trim().toLowerCase()
 
   const existingUser = await prisma.user.findUnique({
@@ -236,6 +250,8 @@ export async function createSupervisor(data: z.infer<typeof createSupervisorSche
     data: {
       email: normalizedEmail,
       name,
+      fatherName,
+      aadhaarNo,
       password: hashedPassword,
       role: "SUPERVISOR",
     },
@@ -327,7 +343,7 @@ export async function adminResetMemberPassword(data: z.infer<typeof adminResetMe
   const session = await auth()
 
   if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
-    return { error: "Only admins and verifiers can reset member passwords" }
+    return { error: "Only admins and verifiers can reset inputter passwords" }
   }
 
   const result = adminResetMemberPasswordSchema.safeParse(data)
@@ -345,11 +361,11 @@ export async function adminResetMemberPassword(data: z.infer<typeof adminResetMe
   })
 
   if (!user) {
-    return { error: "Member account not found" }
+    return { error: "Inputter account not found" }
   }
 
   if (user.role !== "MEMBER") {
-    return { error: "Admin can reset only member passwords" }
+    return { error: "Admin can reset only inputter passwords" }
   }
 
   const hashedPassword = await hashPassword(newPassword)
@@ -370,7 +386,7 @@ export async function verifyMemberPassword(
   const session = await auth()
 
   if (!session?.user || session.user.role !== "ADMIN") {
-    return { error: "Only admins can verify member passwords" }
+    return { error: "Only admins can verify inputter passwords" }
   }
 
   const result = verifyMemberPasswordSchema.safeParse(data)
@@ -387,11 +403,11 @@ export async function verifyMemberPassword(
   })
 
   if (!user) {
-    return { error: "Member not found" }
+    return { error: "Inputter not found" }
   }
 
   if (user.role !== "MEMBER") {
-    return { error: "This is not a member account" }
+    return { error: "This is not an inputter account" }
   }
 
   return {
@@ -400,8 +416,8 @@ export async function verifyMemberPassword(
     passwordType: user.password ? "hashed" : "none",
     email: user.email,
     message: user.password
-      ? "✓ Member has a valid password"
-      : "✗ Member has no password - ask admin to reset it",
+      ? "✓ Inputter has a valid password"
+      : "✗ Inputter has no password - ask admin to reset it",
   }
 }
 
@@ -417,6 +433,8 @@ export async function getMembers() {
     select: {
       id: true,
       name: true,
+      fatherName: true,
+      aadhaarNo: true,
       email: true,
       receivedAmount: true,
       createdAt: true,
@@ -437,6 +455,8 @@ export async function getMembers() {
   return members.map((member) => ({
     id: member.id,
     name: member.name,
+    fatherName: member.fatherName,
+    aadhaarNo: member.aadhaarNo,
     email: member.email,
     receivedAmount: member.receivedAmount,
     createdAt: member.createdAt,
@@ -457,6 +477,8 @@ export async function getAdmins() {
     select: {
       id: true,
       name: true,
+      fatherName: true,
+      aadhaarNo: true,
       email: true,
       createdAt: true,
     },
@@ -476,6 +498,8 @@ export async function getSupervisors() {
     select: {
       id: true,
       name: true,
+      fatherName: true,
+      aadhaarNo: true,
       email: true,
       createdAt: true,
     },
@@ -567,7 +591,7 @@ export async function deleteMember(data: z.infer<typeof deleteMemberSchema>) {
   const session = await auth()
 
   if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
-    return { error: "Only admins or verifiers can delete member accounts" }
+    return { error: "Only admins or verifiers can delete inputter accounts" }
   }
 
   const result = deleteMemberSchema.safeParse(data)
@@ -587,11 +611,11 @@ export async function deleteMember(data: z.infer<typeof deleteMemberSchema>) {
   })
 
   if (!user) {
-    return { error: "Member not found" }
+    return { error: "Inputter not found" }
   }
 
   if (user.role !== "MEMBER") {
-    return { error: "Only member accounts can be deleted" }
+    return { error: "Only inputter accounts can be deleted" }
   }
 
   await prisma.user.delete({

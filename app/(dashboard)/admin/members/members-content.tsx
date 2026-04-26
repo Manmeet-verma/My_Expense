@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input"
 interface MemberRow {
   id: string
   name: string | null
+  fatherName: string | null
+  aadhaarNo: string | null
   email: string
   receivedAmount: number
   totalEdits: number
@@ -57,7 +59,7 @@ interface MemberCollection {
 function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "MEMBER"): string {
   if (role === "SUPERVISOR") return "Verifier"
   if (role === "ADMIN") return "Admin"
-  return "Member"
+  return "Inputter"
 }
 
 function getApprovedBy(expense: MemberExpense): string {
@@ -120,7 +122,7 @@ export default function MembersContent({
     try {
       if (deletingId) return
       
-      const confirmed = window.confirm("Are you sure you want to delete this member?")
+      const confirmed = window.confirm("Are you sure you want to delete this inputter?")
       if (!confirmed) return
       
       setDeletingId(memberId)
@@ -134,7 +136,7 @@ export default function MembersContent({
       }
     } catch (err) {
       console.error("Delete error:", err)
-      alert("Error deleting member")
+      alert("Error deleting inputter")
     } finally {
       setDeletingId(null)
     }
@@ -178,8 +180,8 @@ export default function MembersContent({
       })
       setCollectionFunds(collectionsData || [])
     } catch (error) {
-      console.error("Failed to load member expenses:", error)
-      alert("Could not load member expenses")
+      console.error("Failed to load inputter expenses:", error)
+      alert("Could not load inputter expenses")
       setExpensesByStatus({ approved: [], rejected: [], pending: [] })
       setCollectionFunds([])
     } finally {
@@ -307,6 +309,8 @@ export default function MembersContent({
       filteredMembers.map((member, index) => ({
         "Sr No": index + 1,
         Name: member.name || "-",
+        "Father's Name": member.fatherName || "-",
+        "Aadhaar No.": member.aadhaarNo || "-",
         Email: member.email,
         Expenses: member._count.expenses,
         Collection: member.receivedAmount,
@@ -332,7 +336,7 @@ export default function MembersContent({
 
     return (filteredCurrentExpenses as MemberExpense[]).map((expense, index) => ({
       "Sr No": index + 1,
-      Member: selectedMember.name || selectedMember.email,
+      Inputter: selectedMember.name || selectedMember.email,
       Title: expense.title,
       Description: expense.description || "-",
       Category: expense.category,
@@ -346,18 +350,18 @@ export default function MembersContent({
     <div className="min-h-[calc(100vh-4rem)] p-3 sm:p-6">
       <div>
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Member List</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Inputter List</h1>
           <p className="mt-1 text-gray-600">
             {canManage
-              ? "Admin and verifier access: manage member accounts"
-              : "Verifier access: view member accounts"}
+              ? "Admin and verifier access: manage inputter accounts"
+              : "Verifier access: view inputter accounts"}
           </p>
           <div className="mt-3">
             <ExportExcelButton
               data={memberListExportData}
-              fileName="admin-verifier-members"
-              sheetName="Members"
-              label="Export Members Excel"
+              fileName="admin-verifier-inputters"
+              sheetName="Inputters"
+              label="Export Inputters Excel"
             />
           </div>
         </div>
@@ -389,6 +393,8 @@ export default function MembersContent({
               <thead className="bg-gray-50 text-left text-gray-600">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Name</th>
+                  <th className="px-4 py-3 font-semibold">Father's Name</th>
+                  <th className="px-4 py-3 font-semibold">Aadhaar No.</th>
                   <th className="px-4 py-3 font-semibold">Email</th>
                   <th className="px-4 py-3 font-semibold">Expenses</th>
                   <th className="px-4 py-3 font-semibold">Collection</th>
@@ -400,13 +406,13 @@ export default function MembersContent({
               <tbody>
                 {filteredMembers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
-                      No members found
+                    <td colSpan={9} className="px-4 py-10 text-center text-gray-500">
+                      No inputters found
                     </td>
                   </tr>
                 ) : (
                   filteredMembers.map((member) => (
-                    <tr key={member.id} className="border-t border-gray-100">
+                    <tr key={member.id} className="border-t border-gray-100 odd:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-gray-900">
                         <button
                           onClick={() => openMemberExpenses(member)}
@@ -415,6 +421,8 @@ export default function MembersContent({
                           {member.name || "-"}
                         </button>
                       </td>
+                      <td className="px-4 py-3 text-gray-700">{member.fatherName || "-"}</td>
+                      <td className="px-4 py-3 text-gray-700">{member.aadhaarNo || "-"}</td>
                       <td className="px-4 py-3 text-gray-700">{member.email}</td>
                       <td className="px-4 py-3 text-gray-700">{member._count.expenses}</td>
                       <td className="px-4 py-3 text-gray-700">{formatCurrency(member.receivedAmount)}</td>
@@ -444,7 +452,7 @@ export default function MembersContent({
 
           <div className="hidden divide-y divide-gray-100">
             {members.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-500">No members found</div>
+              <div className="px-4 py-8 text-center text-gray-500">No inputters found</div>
             ) : (
               members.map((member) => (
                 <div key={member.id} className="p-4 space-y-3">
@@ -455,6 +463,8 @@ export default function MembersContent({
                     >
                       {member.name || "-"}
                     </button>
+                    <p className="text-sm text-gray-600">Father: {member.fatherName || "-"}</p>
+                    <p className="text-sm text-gray-600">Aadhaar: {member.aadhaarNo || "-"}</p>
                     <p className="text-sm text-gray-600">{member.email}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
@@ -481,7 +491,7 @@ export default function MembersContent({
                       disabled={deletingId === member.id}
                       className="w-full mt-2 py-2 text-sm text-red-600 border border-red-200 rounded hover:bg-red-50 disabled:opacity-50"
                     >
-                      {deletingId === member.id ? "Deleting..." : "Delete Member"}
+                      {deletingId === member.id ? "Deleting..." : "Delete Inputter"}
                     </button>
                   ) : (
                     <p className="w-full mt-2 py-2 text-center text-xs text-gray-500 border border-gray-200 rounded">
@@ -506,8 +516,8 @@ export default function MembersContent({
               <div className="flex items-center gap-2">
                 <ExportExcelButton
                   data={selectedViewExportData}
-                  fileName={`member-${selectedMember.email}-${activeView}`}
-                  sheetName="MemberData"
+                  fileName={`inputter-${selectedMember.email}-${activeView}`}
+                  sheetName="InputterData"
                   label="Export Current View"
                 />
                 <button
@@ -652,7 +662,7 @@ export default function MembersContent({
                   <tbody>
                     {activeView === "collection"
                       ? (filteredCurrentExpenses as MemberCollection[]).map((fund) => (
-                          <tr key={fund.id} className="border-t border-gray-100">
+                          <tr key={fund.id} className="border-t border-gray-100 odd:bg-gray-50">
                             <td className="px-3 py-2 text-gray-700">{formatDate(fund.fundDate)}</td>
                             <td className="px-3 py-2 text-gray-900">{fund.receivedFrom}</td>
                             <td className="px-3 py-2 text-gray-700">{fund.paymentMode}</td>
@@ -660,7 +670,7 @@ export default function MembersContent({
                           </tr>
                         ))
                       : (filteredCurrentExpenses as MemberExpense[]).map((expense) => (
-                          <tr key={expense.id} className="border-t border-gray-100">
+                          <tr key={expense.id} className="border-t border-gray-100 odd:bg-gray-50">
                             {activeView === "pending" && canApproveExpenses && (
                               <td className="px-3 py-2">
                                 <input

@@ -115,7 +115,7 @@ export function MemberDashboardStatusTable({ site, expenses }: MemberDashboardSt
               </tr>
             ) : (
               filteredRows.map((row, index) => (
-                <tr key={row.id} className="border-t border-gray-100">
+                <tr key={row.id} className="border-t border-gray-100 odd:bg-gray-50">
                   <td className="px-4 py-3 text-gray-700">{index + 1}</td>
                   <td className="px-4 py-3 text-gray-700">{row.site}</td>
                   <td className="px-4 py-3 text-gray-700">{row.expenseHead}</td>

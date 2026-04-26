@@ -7,7 +7,6 @@ import { getAllExpenses, getExpenseStats } from "@/actions/expense"
 import { AdminSection } from "@/components/forms/admin-section"
 import { AdminExpenseManagementTable } from "@/components/admin-expense-management-table"
 import MembersContent from "../members/members-content"
-import { buttonVariants } from "@/components/ui/button"
 
 export default async function AdminDashboardPage() {
   const session = await auth()
@@ -61,15 +60,10 @@ export default async function AdminDashboardPage() {
       <div className="mt-10">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Member List</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Inputter List</h2>
             <p className="mt-1 text-sm text-gray-600">
-              Open the same member page used in the sidebar for full member expense details.
+              Open the same inputter page used in the sidebar for full inputter expense details.
             </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/admin/members" className={buttonVariants({ variant: "outline" })}>
-              Open Full Member Page
-            </Link>
           </div>
         </div>
         <MembersContent members={members} canManage canApproveExpenses={false} />
@@ -82,7 +76,7 @@ export default async function AdminDashboardPage() {
         </div>
         {expenses.length === 0 ? (
           <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600">
-            Expense management data could not be loaded right now, but the member list is still available above.
+            Expense management data could not be loaded right now, but the inputter list is still available above.
           </div>
         ) : (
           <AdminExpenseManagementTable expenses={expenses} totalReceivedAmount={stats?.collectionAmount ?? 0} />

@@ -72,7 +72,7 @@ export function AdminDistributionTransactionsTable({
     () =>
       transactions.map((transaction, index) => ({
         "Sr No": index + 1,
-        Member: transaction.user.name || transaction.user.email,
+        Inputter: transaction.user.name || transaction.user.email,
         Amount: transaction.amount,
         Description: transaction.description || "-",
         "Payment Method": formatPaymentMode(transaction.paymentMode),
@@ -305,7 +305,7 @@ export function AdminDistributionTransactionsTable({
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-600">
             <tr>
-              <th className="px-4 py-3 font-semibold">Member</th>
+              <th className="px-4 py-3 font-semibold">Inputter</th>
               <th className="px-4 py-3 font-semibold">Amount</th>
               <th className="px-4 py-3 font-semibold">Description</th>
               <th className="px-4 py-3 font-semibold">Payment Method</th>
@@ -319,7 +319,7 @@ export function AdminDistributionTransactionsTable({
               const isPending = pendingId === transaction.id
 
               return (
-                <tr key={transaction.id} className="border-t border-gray-100 align-top">
+                <tr key={transaction.id} className="border-t border-gray-100 align-top odd:bg-gray-50">
                   <td className="px-4 py-3 text-gray-900 font-medium">
                     {transaction.user.name || transaction.user.email}
                   </td>

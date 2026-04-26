@@ -67,7 +67,7 @@ export function BudgetOverview({ memberName, totalBudget, submittedAmount }: Bud
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-blue-700 mb-1">Member Name</p>
+            <p className="text-sm text-blue-700 mb-1">Inputter Name</p>
             <p className="text-lg font-semibold text-blue-900">{memberName}</p>
           </div>
 

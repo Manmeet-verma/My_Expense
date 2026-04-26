@@ -218,7 +218,7 @@ export async function getCategoryMemberExpenses(data: z.infer<typeof categoryMem
   const session = await auth()
 
   if (!session?.user || session.user.role !== "ADMIN") {
-    return { error: "Only admins can view category member expenses", data: [] as Array<{
+    return { error: "Only admins can view category inputter expenses", data: [] as Array<{
       id: string
       memberName: string
       description: string | null

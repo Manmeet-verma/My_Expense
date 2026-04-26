@@ -26,6 +26,8 @@ export function SignupForm() {
     const data = {
       email: formData.get("email") as string,
       name: formData.get("name") as string,
+      fatherName: formData.get("fatherName") as string,
+      aadhaarNo: formData.get("aadhaarNo") as string,
       password: formData.get("password") as string,
     }
 
@@ -44,8 +46,8 @@ export function SignupForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Create Member Account</CardTitle>
-        <CardDescription>Admin only: create a member login account</CardDescription>
+        <CardTitle className="text-2xl font-bold">Create Inputter Account</CardTitle>
+        <CardDescription>Admin only: create an inputter login account</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-4">
@@ -75,6 +77,29 @@ export function SignupForm() {
             />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="fatherName">Father's Name</Label>
+            <Input
+              id="fatherName"
+              name="fatherName"
+              type="text"
+              placeholder="Father's Name"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="aadhaarNo">Aadhaar No.</Label>
+            <Input
+              id="aadhaarNo"
+              name="aadhaarNo"
+              type="text"
+              inputMode="numeric"
+              pattern="\\d{12}"
+              maxLength={12}
+              placeholder="12-digit Aadhaar number"
+              required
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Input
@@ -98,7 +123,7 @@ export function SignupForm() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Create Member"}
+            {loading ? "Creating account..." : "Create Inputter"}
           </Button>
           <p className="text-sm text-center text-gray-600">
             Need admin review?{" "}

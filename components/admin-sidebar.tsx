@@ -61,7 +61,7 @@ export function AdminSidebar() {
 
   const cards = [
     { title: "Total Received Amount", value: formatCurrency(stats.collectionAmount ?? 0), icon: DollarSign, color: "text-blue-600", bgColor: "bg-blue-50" },
-    { title: "Total Unapproved Exp. - Req.", value: formatCurrency(stats.pendingAmount ?? 0), icon: Clock, color: "text-red-700", bgColor: "bg-red-50" },
+    { title: "Total Rejected Exp. - Req.", value: formatCurrency(stats.pendingAmount ?? 0), icon: Clock, color: "text-red-700", bgColor: "bg-red-50" },
     { title: "Total Approved Exp. - Payable", value: formatCurrency(stats.totalApprovedAmount), icon: CheckCircle, color: "text-yellow-700", bgColor: "bg-yellow-50" },
     { title: "Total Approved Exp. - Paid", value: formatCurrency(stats.totalPaidAmount ?? 0), icon: TrendingUp, color: "text-green-700", bgColor: "bg-green-50" },
     { title: "Rejected Amount", value: formatCurrency(stats.rejectedAmount ?? 0), icon: XCircle, color: "text-red-600", bgColor: "bg-red-50" },

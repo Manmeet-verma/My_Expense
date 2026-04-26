@@ -47,7 +47,7 @@ export function ApprovedExpenseTable({ expenses }: ApprovedExpenseTableProps) {
           </thead>
           <tbody>
             {expenses.map((expense) => (
-              <tr key={expense.id} className="border-t border-gray-100">
+              <tr key={expense.id} className="border-t border-gray-100 odd:bg-gray-50">
                 <td className="px-4 py-3 text-gray-700">{formatDate(expense.createdAt)}</td>
                 <td className="px-4 py-3 text-gray-700">{formatCategory(expense.category)}</td>
                 <td className="px-4 py-3 text-gray-700">{expense.description || "-"}</td>
@@ -114,7 +114,7 @@ export function RejectedExpenseTable({ expenses }: RejectedExpenseTableProps) {
           </thead>
           <tbody>
             {expenses.map((expense) => (
-              <tr key={expense.id} className="border-t border-gray-100">
+              <tr key={expense.id} className="border-t border-gray-100 odd:bg-gray-50">
                 <td className="px-4 py-3 text-gray-700">{formatDate(expense.createdAt)}</td>
                 <td className="px-4 py-3 text-gray-700">{formatCategory(expense.category)}</td>
                 <td className="px-4 py-3 text-gray-700">{expense.description || "-"}</td>

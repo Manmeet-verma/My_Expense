@@ -63,7 +63,7 @@ function formatCategory(category: string): string {
 function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "MEMBER"): string {
   if (role === "SUPERVISOR") return "Verifier"
   if (role === "ADMIN") return "Admin"
-  return "Member"
+  return "Inputter"
 }
 
 function getApprovedBy(expense: Expense): string {
@@ -314,7 +314,7 @@ export function StatementClient({ userId }: { userId: string }) {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {(currentData as Fund[]).map((fund) => (
-                        <tr key={fund.id} className="hover:bg-gray-50">
+                        <tr key={fund.id} className="hover:bg-gray-50 odd:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-700">{formatDate(fund.createdAt)}</td>
                           <td className="px-2 py-1.5 text-gray-700 truncate max-w-32">{fund.receivedFrom}</td>
                           <td className="px-2 py-1.5 text-gray-700">
@@ -344,7 +344,7 @@ export function StatementClient({ userId }: { userId: string }) {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {(currentData as Expense[]).map((expense) => (
-                        <tr key={expense.id} className="hover:bg-gray-50">
+                        <tr key={expense.id} className="hover:bg-gray-50 odd:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-700">{formatDate(expense.createdAt)}</td>
                           <td className="px-2 py-1.5 text-gray-700 truncate max-w-24">{formatCategory(expense.category)}</td>
                           <td className="px-2 py-1.5 text-gray-700 truncate max-w-32">{expense.title}</td>

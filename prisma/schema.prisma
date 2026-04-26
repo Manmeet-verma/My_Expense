@@ -23,6 +23,8 @@ model User {
   id           String    @id @default(cuid())
   email        String    @unique
   name         String?
+  fatherName   String?
+  aadhaarNo    String?
   password     String
   role         Role      @default(MEMBER)
   totalBudget  Float     @default(0)
