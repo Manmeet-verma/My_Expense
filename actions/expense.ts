@@ -329,8 +329,10 @@ export async function getExpenseStats() {
     return null
   }
 
-  const where = session.user.role === "ADMIN" 
-    ? {} 
+  const canViewGlobalStats = session.user.role === "ADMIN" || session.user.role === "SUPERVISOR"
+
+  const where = canViewGlobalStats
+    ? {}
     : { createdById: session.user.id }
 
   const [total, pending, approved, rejected, paid] = await Promise.all([
@@ -362,7 +364,7 @@ export async function getExpenseStats() {
   })
 
   const totalCollectionAmount = await prisma.fund.aggregate({
-    where: session.user.role === "ADMIN" ? {} : { userId: session.user.id },
+    where: canViewGlobalStats ? {} : { userId: session.user.id },
     _sum: { amount: true },
   })
 
@@ -374,7 +376,7 @@ export async function getExpenseStats() {
 
   // Get user's total budget
   let totalBudget = 0
-  if (session.user.role !== "ADMIN") {
+  if (session.user.role === "MEMBER") {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { totalBudget: true },
