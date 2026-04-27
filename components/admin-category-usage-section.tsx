@@ -148,6 +148,8 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
                     <tr>
                       <th className="px-4 py-3 font-semibold">Inputter Name</th>
                       <th className="px-4 py-3 font-semibold">Description</th>
+                      <th className="px-4 py-3 font-semibold">Credit</th>
+                      <th className="px-4 py-3 font-semibold">Debit</th>
                       <th className="px-4 py-3 font-semibold">Amount</th>
                       <th className="px-4 py-3 font-semibold">Date</th>
                     </tr>
@@ -157,6 +159,8 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
                       <tr key={expense.id} className="border-t border-gray-100 odd:bg-gray-50">
                         <td className="px-4 py-3 text-gray-900 font-medium">{expense.memberName}</td>
                         <td className="px-4 py-3 text-gray-700">{expense.description || "-"}</td>
+                        <td className="px-4 py-3 text-gray-700">-</td>
+                        <td className="px-4 py-3 text-gray-900">{formatCurrency(expense.amount)}</td>
                         <td className="px-4 py-3 text-gray-900">{formatCurrency(expense.amount)}</td>
                         <td className="px-4 py-3 text-gray-700">{formatDate(expense.createdAt)}</td>
                       </tr>

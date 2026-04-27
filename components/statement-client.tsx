@@ -309,6 +309,8 @@ export function StatementClient({ userId }: { userId: string }) {
                         <th className="px-2 py-1.5 font-medium text-gray-600">Date</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600">Received From</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600">Mode</th>
+                        <th className="px-2 py-1.5 font-medium text-gray-600 text-right">Credit</th>
+                        <th className="px-2 py-1.5 font-medium text-gray-600 text-right">Debit</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600 text-right">Amount</th>
                       </tr>
                     </thead>
@@ -322,6 +324,8 @@ export function StatementClient({ userId }: { userId: string }) {
                               {fund.paymentMode}
                             </span>
                           </td>
+                          <td className="px-2 py-1.5 font-medium text-gray-900 text-right">{formatCurrency(fund.amount)}</td>
+                          <td className="px-2 py-1.5 text-gray-600 text-right">-</td>
                           <td className="px-2 py-1.5 font-medium text-gray-900 text-right">{formatCurrency(fund.amount)}</td>
                         </tr>
                       ))}
@@ -337,6 +341,8 @@ export function StatementClient({ userId }: { userId: string }) {
                         <th className="px-2 py-1.5 font-medium text-gray-600">Category</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600">Title</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600">Description</th>
+                        <th className="px-2 py-1.5 font-medium text-gray-600 text-right">Credit</th>
+                        <th className="px-2 py-1.5 font-medium text-gray-600 text-right">Debit</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600 text-right">Amount</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600">Status</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600">Approved By</th>
@@ -349,6 +355,8 @@ export function StatementClient({ userId }: { userId: string }) {
                           <td className="px-2 py-1.5 text-gray-700 truncate max-w-24">{formatCategory(expense.category)}</td>
                           <td className="px-2 py-1.5 text-gray-700 truncate max-w-32">{expense.title}</td>
                           <td className="px-2 py-1.5 text-gray-700 truncate max-w-40">{expense.description || "-"}</td>
+                          <td className="px-2 py-1.5 text-gray-600 text-right">-</td>
+                          <td className="px-2 py-1.5 font-medium text-gray-900 text-right">{formatCurrency(expense.amount)}</td>
                           <td className="px-2 py-1.5 font-medium text-gray-900 text-right">{formatCurrency(expense.amount)}</td>
                           <td className="px-2 py-1.5">
                             <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${

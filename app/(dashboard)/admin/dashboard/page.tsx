@@ -3,7 +3,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { getMembers } from "@/actions/auth"
 import { getAdmins } from "@/actions/auth"
-import { getAllExpenses, getExpenseStats } from "@/actions/expense"
+import { getAllExpenses, getCollectionFundsForLedger, getExpenseStats } from "@/actions/expense"
 import { AdminSection } from "@/components/forms/admin-section"
 import { AdminExpenseManagementTable } from "@/components/admin-expense-management-table"
 import MembersContent from "../members/members-content"
@@ -22,6 +22,7 @@ export default async function AdminDashboardPage() {
   let admins: any[] = []
   let members: any[] = []
   let expenses: any[] = []
+  let collectionFunds: any[] = []
   let stats: any = null
 
   try {
@@ -40,6 +41,12 @@ export default async function AdminDashboardPage() {
     expenses = await getAllExpenses()
   } catch (error) {
     console.error("Failed to load dashboard expenses:", error)
+  }
+
+  try {
+    collectionFunds = await getCollectionFundsForLedger()
+  } catch (error) {
+    console.error("Failed to load collection funds:", error)
   }
 
   try {
@@ -79,7 +86,11 @@ export default async function AdminDashboardPage() {
             Expense management data could not be loaded right now, but the inputter list is still available above.
           </div>
         ) : (
-          <AdminExpenseManagementTable expenses={expenses} totalReceivedAmount={stats?.collectionAmount ?? 0} />
+          <AdminExpenseManagementTable
+            expenses={expenses}
+            totalReceivedAmount={stats?.collectionAmount ?? 0}
+            collectionFunds={collectionFunds}
+          />
         )}
       </div>
     </div>

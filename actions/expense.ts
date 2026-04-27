@@ -535,6 +535,42 @@ export async function getMyFunds() {
   })
 }
 
+export async function getCollectionFundsForLedger() {
+  const session = await auth()
+
+  if (!session?.user) {
+    return []
+  }
+
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR") {
+    return []
+  }
+
+  return await prisma.fund.findMany({
+    where: {
+      NOT: {
+        receivedFrom: {
+          startsWith: "Admin Distribution",
+        },
+      },
+    },
+    select: {
+      id: true,
+      amount: true,
+      fundDate: true,
+      createdAt: true,
+      receivedFrom: true,
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: { fundDate: "asc" },
+  })
+}
+
 const distributeFundSchema = z.object({
   memberId: z.string().min(1, "Inputter ID is required"),
   amount: z.number().positive("Amount must be positive"),

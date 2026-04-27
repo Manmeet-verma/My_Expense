@@ -215,6 +215,8 @@ export function AdminStatementClient({ userId }: AdminStatementClientProps) {
                         <th className="px-3 py-2 font-semibold text-gray-600">Date</th>
                         <th className="px-3 py-2 font-semibold text-gray-600">Category</th>
                         <th className="px-3 py-2 font-semibold text-gray-600">Description</th>
+                        <th className="px-3 py-2 font-semibold text-gray-600 text-right">Credit</th>
+                        <th className="px-3 py-2 font-semibold text-gray-600 text-right">Debit</th>
                         <th className="px-3 py-2 font-semibold text-gray-600 text-right">Amount</th>
                         <th className="px-3 py-2 font-semibold text-gray-600 text-right">Day Total</th>
                         <th className="px-3 py-2 font-semibold text-gray-600">Status</th>
@@ -231,6 +233,8 @@ export function AdminStatementClient({ userId }: AdminStatementClientProps) {
                             <td className="px-3 py-2 text-gray-700">{formatDate(expense.createdAt)}</td>
                             <td className="px-3 py-2 text-gray-700">{formatCategory(expense.category)}</td>
                             <td className="px-3 py-2 text-gray-700">{expense.description || "-"}</td>
+                            <td className="px-3 py-2 text-gray-600 text-right">-</td>
+                            <td className="px-3 py-2 font-semibold text-gray-900 text-right">{formatCurrency(expense.amount)}</td>
                             <td className="px-3 py-2 font-semibold text-gray-900 text-right">{formatCurrency(expense.amount)}</td>
                             <td className="px-3 py-2 text-gray-600 text-right">{formatCurrency(dayTotal)}</td>
                             <td className="px-3 py-2">

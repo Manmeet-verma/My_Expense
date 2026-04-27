@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { getAllExpenses, getExpenseStats } from "@/actions/expense"
+import { getAllExpenses, getCollectionFundsForLedger, getExpenseStats } from "@/actions/expense"
 import { getMembers } from "@/actions/auth"
 import { AdminExpenseManagementTable } from "@/components/admin-expense-management-table"
 import { buttonVariants } from "@/components/ui/button"
@@ -38,6 +38,7 @@ export default async function AdminPage() {
 
   const expenses = await getAllExpenses()
   const stats = await getExpenseStats()
+  const collectionFunds = await getCollectionFundsForLedger()
 
   let members: MemberRow[] = []
   try {
@@ -72,6 +73,7 @@ export default async function AdminPage() {
       <AdminExpenseManagementTable
         expenses={expenses}
         totalReceivedAmount={stats?.collectionAmount ?? 0}
+        collectionFunds={collectionFunds}
         afterCardsContent={
           <MembersContent
             members={members}
