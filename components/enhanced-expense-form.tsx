@@ -5,13 +5,11 @@ import { useRouter } from "next/navigation"
 import { createExpense } from "@/actions/expense"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { formatCurrency } from "@/lib/utils"
 import { broadcastExpenseChange } from "@/lib/supabase/realtime"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, Plus, Trash2 } from "lucide-react"
 
 
 interface EnhancedExpenseFormProps {
@@ -36,9 +34,11 @@ export function EnhancedExpenseForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
-  const [expenseAmount, setExpenseAmount] = useState(0)
   const [liveTotalAmountUsed, setLiveTotalAmountUsed] = useState(totalAmountUsed)
-  const [selectedCategory, setSelectedCategory] = useState<string>(categories[0]?.name || "")
+  const initialCategory = categories[0]?.name || ""
+  const [rows, setRows] = useState<Array<{ id: string; category: string; description: string; amount: string }>>([
+    { id: "row-1", category: initialCategory, description: "", amount: "" },
+  ])
 
   function normalizeOptionalString(value: FormDataEntryValue | null) {
     if (typeof value !== "string") return undefined
@@ -50,40 +50,74 @@ export function EnhancedExpenseForm({
     setLiveTotalAmountUsed(totalAmountUsed)
   }, [totalAmountUsed])
 
+  useEffect(() => {
+    setRows((currentRows) =>
+      currentRows.map((row) =>
+        row.category ? row : { ...row, category: initialCategory }
+      )
+    )
+  }, [initialCategory])
+
+  function addRow() {
+    const rowId = `row-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    setRows((currentRows) => [
+      ...currentRows,
+      { id: rowId, category: initialCategory, description: "", amount: "" },
+    ])
+  }
+
+  function removeRow(id: string) {
+    setRows((currentRows) => (currentRows.length === 1 ? currentRows : currentRows.filter((row) => row.id !== id)))
+  }
+
+  function updateRow(id: string, field: "category" | "description" | "amount", value: string) {
+    setRows((currentRows) => currentRows.map((row) => (row.id === id ? { ...row, [field]: value } : row)))
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     setError("")
 
-    const form = e.currentTarget
-    const formData = new FormData(form)
-    const data = {
-      title: normalizeOptionalString(formData.get("title")),
-      description: normalizeOptionalString(formData.get("description")),
-      amount: parseFloat(formData.get("amount") as string),
-      category: formData.get("category") as string,
-    }
-    const createdAmount = data.amount
+    const invalidRow = rows.find((row) => !row.category || !row.amount || Number.isNaN(Number(row.amount)) || Number(row.amount) <= 0)
 
-    const result = await createExpense(data)
-
-    if (result?.error) {
-      setError(result.error)
+    if (invalidRow) {
+      setError("Please fill category and enter a valid amount for each row.")
       setLoading(false)
-    } else {
-      form.reset()
-      setExpenseAmount(0)
-      setLiveTotalAmountUsed((prev) => prev + createdAmount)
-      void broadcastExpenseChange("member-create")
-      setSuccess(true)
-      setLoading(false)
-      setTimeout(() => {
-        router.refresh()
-        if (onSuccess) onSuccess()
-        setSuccess(false)
-        setSelectedCategory(categories[0]?.name || "")
-      }, 1500)
+      return
     }
+
+    const createdAmounts: number[] = []
+
+    for (const row of rows) {
+      const result = await createExpense({
+        title: normalizeOptionalString(row.description),
+        description: normalizeOptionalString(row.description),
+        amount: Number(row.amount),
+        category: row.category,
+      })
+
+      if (result?.error) {
+        setError(result.error)
+        setLoading(false)
+        return
+      }
+
+      createdAmounts.push(Number(row.amount))
+    }
+
+    const createdTotal = createdAmounts.reduce((sum, amount) => sum + amount, 0)
+
+    setRows([{ id: "row-1", category: initialCategory, description: "", amount: "" }])
+    setLiveTotalAmountUsed((prev) => prev + createdTotal)
+    void broadcastExpenseChange("member-create")
+    setSuccess(true)
+    setLoading(false)
+    setTimeout(() => {
+      router.refresh()
+      if (onSuccess) onSuccess()
+      setSuccess(false)
+    }, 1500)
   }
 
   if (success) {
@@ -98,78 +132,123 @@ export function EnhancedExpenseForm({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Expense Form Card */}
-      <Card>
-        <CardHeader className="py-2">
-          <CardTitle className="text-sm">Add Expense</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-3">
-            {error && (
-              <div className="bg-red-50 text-red-600 text-xs p-2 rounded">
-                {error}
-              </div>
-            )}
-
-          <div className="space-y-1">
-              <Label htmlFor="category" className="text-xs">Category *</Label>
-              <Select 
-                id="category" 
-                name="category" 
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                required
-                className="h-10 w-full text-sm"
-              >
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.name}>
-                    {cat.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="description" className="text-xs">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              placeholder="Details..."
-              rows={2}
-              className="text-xs"
-            />
+    <div>
+      <form onSubmit={onSubmit} className="w-full">
+        {error && (
+          <div className="bg-red-50 text-red-600 text-xs p-2 rounded mb-3">
+            {error}
           </div>
+        )}
 
-          <div className="space-y-1">
-            <Label htmlFor="amount" className="text-xs">Amount (INR) *</Label>
-            <Input
-              id="amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="₹0.00"
-              onChange={(e) => setExpenseAmount(parseFloat(e.target.value) || 0)}
-              required
-              className="h-7 text-xs"
-            />
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="text-xs text-gray-600">
+            Add one or more expense rows, then submit them together.
           </div>
-
-          {/* Real-time calculation */}
-          <div className="bg-gray-50 rounded p-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-600">Total:</span>
-              <span className="font-semibold">{formatCurrency(liveTotalAmountUsed + expenseAmount)}</span>
-            </div>
-          </div>
-
-          <Button type="submit" className="w-full h-7 text-xs" disabled={loading}>
-            {loading ? "Saving..." : "Create Expense"}
+          <Button type="button" variant="outline" size="sm" onClick={addRow} className="h-8 gap-2 text-xs">
+            <Plus className="h-4 w-4" />
+            Add Row
           </Button>
-          </form>
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse min-w-[980px] sm:min-w-0">
+            <thead className="hidden sm:table-header-group">
+              <tr className="bg-gray-50 text-left text-gray-600">
+                <th className="px-3 py-2 font-semibold w-12">Sr. No.</th>
+                <th className="px-3 py-2 font-semibold">Category</th>
+                <th className="px-3 py-2 font-semibold">Description</th>
+                <th className="px-3 py-2 font-semibold w-40">Amount (INR)</th>
+                <th className="px-3 py-2 font-semibold w-24">Action</th>
+              </tr>
+            </thead>
+            <tbody className="block sm:table-row-group">
+              {rows.map((row, index) => (
+                <tr
+                  key={row.id}
+                  className="mb-4 block rounded-xl border border-gray-200 bg-white shadow-sm sm:mb-0 sm:table-row sm:rounded-none sm:border-t sm:border-gray-100 sm:shadow-none"
+                >
+                  <td className="flex items-center justify-between gap-3 px-3 py-2 text-gray-700 sm:table-cell sm:px-3">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500 sm:hidden">Sr. No.</span>
+                    <span>{index + 1}</span>
+                  </td>
+
+                  <td className="flex flex-col gap-1 px-3 py-2 sm:table-cell sm:px-3">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500 sm:hidden">Category</span>
+                    <Select
+                      id={`category-${row.id}`}
+                      name={`category-${row.id}`}
+                      value={row.category}
+                      onChange={(e) => updateRow(row.id, "category", e.target.value)}
+                      required
+                      className="h-10 w-full text-sm"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </td>
+
+                  <td className="flex flex-col gap-1 px-3 py-2 sm:table-cell sm:px-3">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500 sm:hidden">Description</span>
+                    <Textarea
+                      id={`description-${row.id}`}
+                      name={`description-${row.id}`}
+                      value={row.description}
+                      onChange={(e) => updateRow(row.id, "description", e.target.value)}
+                      placeholder="Write description..."
+                      rows={2}
+                      className="min-h-[44px] text-sm"
+                    />
+                  </td>
+
+                  <td className="flex flex-col gap-1 px-3 py-2 sm:table-cell sm:px-3">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500 sm:hidden">Amount (INR)</span>
+                    <Input
+                      id={`amount-${row.id}`}
+                      name={`amount-${row.id}`}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={row.amount}
+                      onChange={(e) => updateRow(row.id, "amount", e.target.value)}
+                      required
+                      className="h-10 w-full text-sm"
+                    />
+                  </td>
+
+                  <td className="px-3 py-2 sm:table-cell sm:px-3">
+                    <div className="flex justify-end sm:justify-start">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeRow(row.id)}
+                        disabled={rows.length === 1}
+                        className="h-9 gap-1 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Remove
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-xs text-gray-600">
+            Rows: <span className="font-semibold">{rows.length}</span> | Total: <span className="font-semibold">{formatCurrency(liveTotalAmountUsed + rows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0))}</span>
+          </div>
+          <Button type="submit" disabled={loading} className="h-9 text-sm sm:self-auto self-stretch">
+            {loading ? "Saving..." : "Submit Expense"}
+          </Button>
+        </div>
+      </form>
     </div>
   )
 }

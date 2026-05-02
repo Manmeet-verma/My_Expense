@@ -1,5 +1,6 @@
 "use client"
 
+import { useCallback } from "react"
 import { formatCurrency } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { TrendingUp, Clock, CheckCircle, XCircle, DollarSign } from "lucide-react"
@@ -21,7 +22,7 @@ interface StatsCardsProps {
   }
 }
 
-export function StatsCards({ stats, mode = "member" }: StatsCardsProps) {
+export function StatsCards({ stats, mode = "member", activeStatus, onSelectStatus }: StatsCardsProps & { activeStatus?: string; onSelectStatus?: (s: string) => void }) {
   const totalExpenseAmount = stats.submittedAmount ?? 0
   const collectionAmount = stats.collectionAmount ?? stats.totalBudget ?? 0
   const remainingCollection = collectionAmount - totalExpenseAmount
@@ -135,24 +136,48 @@ export function StatsCards({ stats, mode = "member" }: StatsCardsProps) {
     mode === "admin"
       ? "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
       : "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+  const handleClick = useCallback(
+    (title: string) => {
+      if (!onSelectStatus) return
+      // Map certain titles to statuses
+      const mapping: Record<string, string> = {
+        Approved: "APPROVED",
+        Pending: "PENDING",
+        Rejected: "REJECTED",
+        Paid: "VERIFIED",
+      }
+      const mapped = mapping[title] || "ALL"
+      // toggle: if already active, clear to ALL
+      if (activeStatus === mapped) {
+        onSelectStatus("ALL")
+      } else {
+        onSelectStatus(mapped)
+      }
+    },
+    [onSelectStatus, activeStatus]
+  )
 
   return (
     <div className={gridClass}>
-      {cards.map((card) => (
-        <Card key={card.title}>
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1 pr-2">
-                <p className="text-xs text-gray-500 sm:text-sm">{card.title}</p>
-                <p className="mt-1 text-lg font-bold leading-tight text-gray-900 sm:text-2xl">{card.value}</p>
+      {cards.map((card) => {
+        const mapped = { Approved: "APPROVED", Pending: "PENDING", Rejected: "REJECTED", Paid: "VERIFIED" }[card.title] || "ALL"
+        const isActive = activeStatus === mapped
+        return (
+          <Card key={card.title} onClick={() => handleClick(card.title)} className={`${isActive ? "ring-2 ring-offset-1 ring-blue-300" : ""} cursor-pointer`}>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1 pr-2">
+                  <p className="text-xs text-gray-500 sm:text-sm">{card.title}</p>
+                  <p className="mt-1 text-lg font-bold leading-tight text-gray-900 sm:text-2xl">{card.value}</p>
+                </div>
+                <div className={`rounded-lg p-2 ${card.bgColor}`}>
+                  <card.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.color}`} />
+                </div>
               </div>
-              <div className={`rounded-lg p-2 ${card.bgColor}`}>
-                <card.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.color}`} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        )
+      })}
     </div>
   )
 }

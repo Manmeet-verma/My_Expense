@@ -26,7 +26,7 @@ export default async function ExpenseEntryPage() {
 
       <div className="flex justify-center">
         {stats && (
-          <div className="bg-white rounded-lg border border-gray-200 p-4 w-full max-w-xl shadow-sm">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 w-full max-w-5xl shadow-sm">
             <h2 className="text-base font-semibold text-gray-900 mb-4 text-center border-b pb-2">Add New Expense</h2>
             <EnhancedExpenseForm
               memberName={session.user.name || "Inputter"}

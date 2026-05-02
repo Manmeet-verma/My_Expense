@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 
 type ExpenseStatus = "PENDING" | "APPROVED" | "REJECTED" | "PAID"
@@ -50,8 +50,21 @@ function inputterAction(status: Exclude<DisplayStatus, "ALL">): string {
   return "Submitted"
 }
 
-export function MemberDashboardStatusTable({ site, expenses }: MemberDashboardStatusTableProps) {
-  const [activeStatus, setActiveStatus] = useState<DisplayStatus>("ALL")
+interface MemberDashboardStatusTablePropsExtended extends MemberDashboardStatusTableProps {
+  activeStatus?: DisplayStatus
+  onStatusChange?: (s: DisplayStatus) => void
+}
+
+export function MemberDashboardStatusTable({ site, expenses, activeStatus: externalActiveStatus, onStatusChange }: MemberDashboardStatusTablePropsExtended) {
+  const [activeStatus, setActiveStatus] = useState<DisplayStatus>(externalActiveStatus ?? "ALL")
+
+  // Sync with external control if provided
+  useEffect(() => {
+    if (externalActiveStatus !== undefined && externalActiveStatus !== activeStatus) {
+      setActiveStatus(externalActiveStatus)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalActiveStatus])
 
   const rows = useMemo(
     () =>
@@ -80,7 +93,10 @@ export function MemberDashboardStatusTable({ site, expenses }: MemberDashboardSt
           {statusButtons.map((status) => (
             <button
               key={status}
-              onClick={() => setActiveStatus(status)}
+              onClick={() => {
+                setActiveStatus(status)
+                onStatusChange?.(status)
+              }}
               className={`rounded border px-3 py-1.5 text-xs sm:text-sm ${
                 activeStatus === status
                   ? "border-blue-300 bg-blue-50 text-blue-700"

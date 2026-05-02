@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 
+function getLocalDayStart(dateString: string) {
+  return new Date(`${dateString}T00:00:00`)
+}
+
+function getLocalDayEnd(dateString: string) {
+  return new Date(`${dateString}T23:59:59.999`)
+}
+
 export async function GET(request: NextRequest) {
   const session = await auth()
 
@@ -15,14 +23,16 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get("userId")
 
   try {
+    // Only allow userId parameter if user is admin or supervisor
+    const requestedUserId = userId && (session.user.role === "ADMIN" || session.user.role === "SUPERVISOR") 
+      ? userId 
+      : session.user.id
+
     let funds
 
     if (fromDate && toDate) {
-      const fromDateTime = new Date(fromDate)
-      fromDateTime.setHours(0, 0, 0, 0)
-
-      const toDateTime = new Date(toDate)
-      toDateTime.setHours(23, 59, 59, 999)
+      const fromDateTime = getLocalDayStart(fromDate)
+      const toDateTime = getLocalDayEnd(toDate)
 
       funds = await prisma.fund.findMany({
         where: {
@@ -30,7 +40,7 @@ export async function GET(request: NextRequest) {
             gte: fromDateTime,
             lte: toDateTime,
           },
-          userId: userId || session.user.id,
+          userId: requestedUserId,
         },
         orderBy: {
           createdAt: "desc",
@@ -39,7 +49,7 @@ export async function GET(request: NextRequest) {
     } else {
       funds = await prisma.fund.findMany({
         where: {
-          userId: userId || session.user.id,
+          userId: requestedUserId,
         },
         orderBy: {
           createdAt: "desc",

@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -236,6 +236,7 @@ export function MyStatementClient({ userId }: MyStatementClientProps) {
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const [showFundModal, setShowFundModal] = useState(false)
+  const searchTimerRef = useRef<number | null>(null)
 
   async function handleSearch() {
     if (!fromDate || !toDate) return
@@ -269,6 +270,26 @@ export function MyStatementClient({ userId }: MyStatementClientProps) {
 
     setLoading(false)
   }
+
+  useEffect(() => {
+    if (!fromDate || !toDate) {
+      return
+    }
+
+    if (searchTimerRef.current) {
+      window.clearTimeout(searchTimerRef.current)
+    }
+
+    searchTimerRef.current = window.setTimeout(() => {
+      void handleSearch()
+    }, 250)
+
+    return () => {
+      if (searchTimerRef.current) {
+        window.clearTimeout(searchTimerRef.current)
+      }
+    }
+  }, [fromDate, toDate])
 
   const approvedTotal = approvedExpenses.reduce((sum, exp) => sum + exp.amount, 0)
   const rejectedTotal = rejectedExpenses.reduce((sum, exp) => sum + exp.amount, 0)

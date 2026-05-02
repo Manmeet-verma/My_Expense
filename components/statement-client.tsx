@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -96,6 +96,7 @@ export function StatementClient({ userId }: { userId: string }) {
   const [activeTab, setActiveTab] = useState<TabType>("collection")
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const searchTimerRef = useRef<number | null>(null)
 
   async function handleSearch() {
     if (!fromDate || !toDate) return
@@ -135,6 +136,26 @@ export function StatementClient({ userId }: { userId: string }) {
 
     setLoading(false)
   }
+
+  useEffect(() => {
+    if (!fromDate || !toDate) {
+      return
+    }
+
+    if (searchTimerRef.current) {
+      window.clearTimeout(searchTimerRef.current)
+    }
+
+    searchTimerRef.current = window.setTimeout(() => {
+      void handleSearch()
+    }, 250)
+
+    return () => {
+      if (searchTimerRef.current) {
+        window.clearTimeout(searchTimerRef.current)
+      }
+    }
+  }, [fromDate, toDate])
 
   const allExpenses = [...approvedExpenses, ...rejectedExpenses, ...pendingExpenses]
 

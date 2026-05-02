@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 
+function getLocalDayStart(dateString: string) {
+  return new Date(`${dateString}T00:00:00`)
+}
+
+function getLocalDayEnd(dateString: string) {
+  return new Date(`${dateString}T23:59:59.999`)
+}
+
 export async function GET(request: NextRequest) {
   const session = await auth()
 
@@ -20,11 +28,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const fromDateTime = new Date(fromDate)
-    fromDateTime.setHours(0, 0, 0, 0)
+    // Only allow userId parameter if user is admin or supervisor
+    const requestedUserId = userId && (session.user.role === "ADMIN" || session.user.role === "SUPERVISOR") 
+      ? userId 
+      : session.user.id
 
-    const toDateTime = new Date(toDate)
-    toDateTime.setHours(23, 59, 59, 999)
+    // Validate status is a valid enum value
+    const validStatuses = ["APPROVED", "REJECTED", "PENDING", "PAID"]
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json({ error: "Invalid status parameter" }, { status: 400 })
+    }
+
+    const fromDateTime = getLocalDayStart(fromDate)
+    const toDateTime = getLocalDayEnd(toDate)
 
     const expenses = await prisma.expense.findMany({
       where: {
@@ -33,7 +49,7 @@ export async function GET(request: NextRequest) {
           lte: toDateTime,
         },
         status: status as "APPROVED" | "REJECTED" | "PENDING" | "PAID",
-        createdById: userId || session.user.id,
+        createdById: requestedUserId,
       },
       include: {
         approvedBy: {

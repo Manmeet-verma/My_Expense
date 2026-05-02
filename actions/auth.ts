@@ -144,38 +144,43 @@ export async function signup(data: z.infer<typeof signupSchema>) {
 }
 
 export async function publicSignup(data: z.infer<typeof publicSignupSchema>) {
-  const result = publicSignupSchema.safeParse(data)
+  try {
+    const result = publicSignupSchema.safeParse(data)
 
-  if (!result.success) {
-    return { error: result.error.issues[0].message }
+    if (!result.success) {
+      return { error: result.error.issues[0].message }
+    }
+
+    const { email, name, fatherName, aadhaarNo, password } = result.data
+    const normalizedEmail = email.trim().toLowerCase()
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    })
+
+    if (existingUser) {
+      return { error: "Email already registered" }
+    }
+
+    const hashedPassword = await hashPassword(password)
+
+    await prisma.user.create({
+      data: {
+        email: normalizedEmail,
+        name,
+        fatherName,
+        aadhaarNo,
+        password: hashedPassword,
+        role: "MEMBER",
+      },
+    })
+
+    revalidatePath("/login")
+    return { success: true }
+  } catch (error) {
+    console.error("Signup error:", error)
+    return { error: "Failed to create account. Please try again." }
   }
-
-  const { email, name, fatherName, aadhaarNo, password } = result.data
-  const normalizedEmail = email.trim().toLowerCase()
-
-  const existingUser = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
-  })
-
-  if (existingUser) {
-    return { error: "Email already registered" }
-  }
-
-  const hashedPassword = await hashPassword(password)
-
-  await prisma.user.create({
-    data: {
-      email: normalizedEmail,
-      name,
-      fatherName,
-      aadhaarNo,
-      password: hashedPassword,
-      role: "MEMBER",
-    },
-  })
-
-  revalidatePath("/login")
-  return { success: true }
 }
 
 export async function createAdmin(data: z.infer<typeof createAdminSchema>) {

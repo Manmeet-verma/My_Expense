@@ -79,7 +79,7 @@ export const authOptions: NextAuthOptions = {
               data: { password: upgradedHash },
             })
           } catch (error) {
-            console.error("[AUTH] Password hash upgrade failed:", error)
+            // Silently ignore hash upgrade failures to not block login
           }
         }
 
@@ -94,7 +94,6 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      console.log("[JWT] jwt callback", { user, token: { ...token, picture: undefined } })
       if (user) {
         token.id = user.id as string
         token.role = user.role as Role
@@ -102,7 +101,6 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      console.log("[SESSION] session callback", { token: { ...token, picture: undefined } })
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as Role
