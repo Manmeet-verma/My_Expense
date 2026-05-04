@@ -1,10 +1,11 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
+import { formatCurrency, formatDate } from "@/lib/utils"
 
 type ExpenseStatus = "PENDING" | "APPROVED" | "REJECTED" | "PAID"
-type DisplayStatus = "PENDING" | "APPROVED" | "REJECTED" | "VERIFIED" | "ALL"
+type DisplayStatus = "PENDING" | "APPROVED" | "REJECTED" | "VERIFIED" | "COLLECTION" | "ALL"
 
 interface MemberDashboardExpense {
   id: string
@@ -13,9 +14,19 @@ interface MemberDashboardExpense {
   status: ExpenseStatus
 }
 
+interface Fund {
+  id: string
+  amount: number
+  receivedFrom: string
+  paymentMode: string
+  fundDate: Date
+  createdAt: Date
+}
+
 interface MemberDashboardStatusTableProps {
   site: string
   expenses: MemberDashboardExpense[]
+  funds?: Fund[]
 }
 
 function formatCategory(category: string): string {
@@ -26,26 +37,26 @@ function formatCategory(category: string): string {
     .join(" ")
 }
 
-function getDisplayStatus(status: ExpenseStatus): Exclude<DisplayStatus, "ALL"> {
+function getDisplayStatus(status: ExpenseStatus): Exclude<DisplayStatus, "ALL" | "COLLECTION"> {
   if (status === "PAID") return "VERIFIED"
   return status
 }
 
-function getStatusBadgeVariant(status: Exclude<DisplayStatus, "ALL">): "warning" | "success" | "destructive" | "secondary" {
+function getStatusBadgeVariant(status: Exclude<DisplayStatus, "ALL" | "COLLECTION">): "warning" | "success" | "destructive" | "secondary" {
   if (status === "PENDING") return "warning"
   if (status === "APPROVED") return "success"
   if (status === "REJECTED") return "destructive"
   return "secondary"
 }
 
-function actionTakenBy(status: Exclude<DisplayStatus, "ALL">): string {
+function actionTakenBy(status: Exclude<DisplayStatus, "ALL" | "COLLECTION">): string {
   if (status === "PENDING") return "Pending Review"
   if (status === "APPROVED") return "Verifier"
   if (status === "REJECTED") return "Verifier"
   return "Admin"
 }
 
-function inputterAction(status: Exclude<DisplayStatus, "ALL">): string {
+function inputterAction(status: Exclude<DisplayStatus, "ALL" | "COLLECTION">): string {
   if (status === "PENDING") return "Submitted (can edit/delete)"
   return "Submitted"
 }
@@ -55,10 +66,15 @@ interface MemberDashboardStatusTablePropsExtended extends MemberDashboardStatusT
   onStatusChange?: (s: DisplayStatus) => void
 }
 
-export function MemberDashboardStatusTable({ site, expenses, activeStatus: externalActiveStatus, onStatusChange }: MemberDashboardStatusTablePropsExtended) {
+export function MemberDashboardStatusTable({
+  site,
+  expenses,
+  funds = [],
+  activeStatus: externalActiveStatus,
+  onStatusChange,
+}: MemberDashboardStatusTablePropsExtended) {
   const [activeStatus, setActiveStatus] = useState<DisplayStatus>(externalActiveStatus ?? "ALL")
 
-  // Sync with external control if provided
   useEffect(() => {
     if (externalActiveStatus !== undefined && externalActiveStatus !== activeStatus) {
       setActiveStatus(externalActiveStatus)
@@ -80,10 +96,11 @@ export function MemberDashboardStatusTable({ site, expenses, activeStatus: exter
 
   const filteredRows = useMemo(() => {
     if (activeStatus === "ALL") return rows
+    if (activeStatus === "COLLECTION") return []
     return rows.filter((row) => row.status === activeStatus)
   }, [rows, activeStatus])
 
-  const statusButtons: DisplayStatus[] = ["ALL", "PENDING", "REJECTED", "VERIFIED", "APPROVED"]
+  const statusButtons: DisplayStatus[] = ["ALL", "PENDING", "REJECTED", "VERIFIED", "APPROVED", "COLLECTION"]
 
   return (
     <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
@@ -98,9 +115,7 @@ export function MemberDashboardStatusTable({ site, expenses, activeStatus: exter
                 onStatusChange?.(status)
               }}
               className={`rounded border px-3 py-1.5 text-xs sm:text-sm ${
-                activeStatus === status
-                  ? "border-blue-300 bg-blue-50 text-blue-700"
-                  : "border-gray-200 bg-white text-gray-700"
+                activeStatus === status ? "border-blue-300 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-700"
               }`}
             >
               {status}
@@ -114,16 +129,49 @@ export function MemberDashboardStatusTable({ site, expenses, activeStatus: exter
           <thead className="bg-gray-50 text-left text-gray-600">
             <tr>
               <th className="px-4 py-3 font-semibold">Sr</th>
-              <th className="px-4 py-3 font-semibold">Site</th>
-              <th className="px-4 py-3 font-semibold">Expenses Head</th>
-              <th className="px-4 py-3 font-semibold">Main Head</th>
-              <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold">Action taken by</th>
-              <th className="px-4 py-3 font-semibold">Action of Inputter</th>
+              {activeStatus === "COLLECTION" ? (
+                <>
+                  <th className="px-4 py-3 font-semibold">Date</th>
+                  <th className="px-4 py-3 font-semibold">Received From</th>
+                  <th className="px-4 py-3 font-semibold">Payment Mode</th>
+                  <th className="px-4 py-3 font-semibold text-right">Amount</th>
+                </>
+              ) : (
+                <>
+                  <th className="px-4 py-3 font-semibold">Site</th>
+                  <th className="px-4 py-3 font-semibold">Expenses Head</th>
+                  <th className="px-4 py-3 font-semibold">Main Head</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Action taken by</th>
+                  <th className="px-4 py-3 font-semibold">Action of Inputter</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
-            {filteredRows.length === 0 ? (
+            {activeStatus === "COLLECTION" ? (
+              funds.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
+                    No collections found
+                  </td>
+                </tr>
+              ) : (
+                funds.map((fund, index) => (
+                  <tr key={fund.id} className="border-t border-gray-100 odd:bg-gray-50">
+                    <td className="px-4 py-3 text-gray-700">{index + 1}</td>
+                    <td className="px-4 py-3 text-gray-700">{formatDate(fund.fundDate)}</td>
+                    <td className="px-4 py-3 text-gray-700">{fund.receivedFrom}</td>
+                    <td className="px-4 py-3 text-gray-700">
+                      <span className="rounded bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">
+                        {fund.paymentMode}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-gray-900">{formatCurrency(fund.amount)}</td>
+                  </tr>
+                ))
+              )
+            ) : filteredRows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
                   No expenses found for selected status
@@ -135,7 +183,7 @@ export function MemberDashboardStatusTable({ site, expenses, activeStatus: exter
                   <td className="px-4 py-3 text-gray-700">{index + 1}</td>
                   <td className="px-4 py-3 text-gray-700">{row.site}</td>
                   <td className="px-4 py-3 text-gray-700">{row.expenseHead}</td>
-                  <td className="px-4 py-3 text-gray-900 font-medium">{row.mainHead}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900">{row.mainHead}</td>
                   <td className="px-4 py-3">
                     <Badge variant={getStatusBadgeVariant(row.status)}>{row.status}</Badge>
                   </td>

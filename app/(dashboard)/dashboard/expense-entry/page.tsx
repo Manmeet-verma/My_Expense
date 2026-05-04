@@ -4,7 +4,15 @@ import { getExpenseStats } from "@/actions/expense"
 import { getCategories } from "@/actions/category"
 import { EnhancedExpenseForm } from "@/components/enhanced-expense-form"
 
-export default async function ExpenseEntryPage() {
+interface PageProps {
+  searchParams: Promise<{
+    collectionId?: string
+    collectionAmount?: string
+    collectionFrom?: string
+  }>
+}
+
+export default async function ExpenseEntryPage({ searchParams }: PageProps) {
   const session = await auth()
 
   if (!session?.user) {
@@ -15,6 +23,7 @@ export default async function ExpenseEntryPage() {
     redirect("/admin")
   }
 
+  const params = await searchParams
   const stats = await getExpenseStats()
   const categories = await getCategories()
 
@@ -33,6 +42,9 @@ export default async function ExpenseEntryPage() {
               budget={stats.totalBudget || 0}
               totalAmountUsed={stats.submittedAmount || 0}
               categories={categories}
+              collectionId={params.collectionId}
+              collectionAmount={params.collectionAmount ? parseFloat(params.collectionAmount) : undefined}
+              collectionFrom={params.collectionFrom}
             />
           </div>
         )}

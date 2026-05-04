@@ -22,13 +22,19 @@ interface EnhancedExpenseFormProps {
     description: string | null
   }>
   onSuccess?: () => void
+  collectionId?: string
+  collectionAmount?: number
+  collectionFrom?: string
 }
 export function EnhancedExpenseForm({ 
   memberName,
   budget,
   totalAmountUsed,
   categories,
-  onSuccess 
+  onSuccess,
+  collectionId,
+  collectionAmount,
+  collectionFrom
 }: EnhancedExpenseFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -137,6 +143,28 @@ export function EnhancedExpenseForm({
         {error && (
           <div className="bg-red-50 text-red-600 text-xs p-2 rounded mb-3">
             {error}
+          </div>
+        )}
+
+        {collectionId && collectionAmount && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-purple-800">Collection Selected</p>
+                <p className="text-sm text-purple-900 font-semibold mt-1">{collectionFrom}</p>
+                <p className="text-xs text-purple-700 mt-1">Amount: {formatCurrency(collectionAmount)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  // Clear collection by navigating without params
+                  router.push("/dashboard/expense-entry")
+                }}
+                className="text-purple-600 hover:text-purple-800 font-medium text-xs px-3 py-1 border border-purple-300 rounded hover:bg-purple-100 transition"
+              >
+                Clear
+              </button>
+            </div>
           </div>
         )}
 

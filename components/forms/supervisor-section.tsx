@@ -104,7 +104,7 @@ export function SupervisorSection({ supervisors }: SupervisorSectionProps) {
             <thead className="bg-gray-50 text-left text-gray-600">
               <tr>
                 <th className="px-4 py-3 font-semibold">Name</th>
-                <th className="px-4 py-3 font-semibold">Father's Name</th>
+                <th className="px-4 py-3 font-semibold">Father&apos;s Name</th>
                 <th className="px-4 py-3 font-semibold">Aadhaar No.</th>
                 <th className="px-4 py-3 font-semibold">Email</th>
                 <th className="px-4 py-3 font-semibold">Created</th>

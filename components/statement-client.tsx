@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -16,12 +17,12 @@ interface Expense {
   status: "APPROVED" | "REJECTED" | "PENDING" | "PAID"
   createdAt: Date
   approvedByName?: string | null
-  approvedByRole?: "ADMIN" | "SUPERVISOR" | "MEMBER" | null
+  approvedByRole?: "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER" | null
   approvedBy?: {
     id: string
     name: string | null
     email: string
-    role: "ADMIN" | "SUPERVISOR" | "MEMBER"
+    role: "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER"
   } | null
 }
 
@@ -60,8 +61,8 @@ function formatCategory(category: string): string {
   return category.charAt(0) + category.slice(1).toLowerCase().replace(/_/g, " ")
 }
 
-function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "MEMBER"): string {
-  if (role === "SUPERVISOR") return "Verifier"
+function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER"): string {
+  if (role === "SUPERVISOR" || role === "VERIFIER") return "Verifier"
   if (role === "ADMIN") return "Admin"
   return "Inputter"
 }
@@ -85,6 +86,7 @@ function getApprovedBy(expense: Expense): string {
 }
 
 export function StatementClient({ userId }: { userId: string }) {
+  const router = useRouter()
   const defaultRange = getCurrentMonthDateRange()
   const [fromDate, setFromDate] = useState(defaultRange.from)
   const [toDate, setToDate] = useState(defaultRange.to)
@@ -337,7 +339,11 @@ export function StatementClient({ userId }: { userId: string }) {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {(currentData as Fund[]).map((fund) => (
-                        <tr key={fund.id} className="hover:bg-gray-50 odd:bg-gray-50">
+                        <tr
+                          key={fund.id}
+                          onClick={() => router.push(`/dashboard/expense-entry?collectionId=${fund.id}&collectionAmount=${fund.amount}&collectionFrom=${encodeURIComponent(fund.receivedFrom)}`)}
+                          className="hover:bg-purple-100 odd:bg-gray-50 cursor-pointer transition"
+                        >
                           <td className="px-2 py-1.5 text-gray-700">{formatDate(fund.createdAt)}</td>
                           <td className="px-2 py-1.5 text-gray-700 truncate max-w-32">{fund.receivedFrom}</td>
                           <td className="px-2 py-1.5 text-gray-700">

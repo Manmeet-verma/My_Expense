@@ -11,7 +11,16 @@ import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { formatDate } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
 
-export function MyFundForm() {
+interface ReceivedFromOption {
+  label: string
+  value: string
+}
+
+interface MyFundFormProps {
+  receivedFromOptions: ReceivedFromOption[]
+}
+
+export function MyFundForm({ receivedFromOptions }: MyFundFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -113,8 +122,11 @@ export function MyFundForm() {
           required
         >
           <option value="">Select</option>
-          <option value="Ajay">Ajay</option>
-          <option value="Rishav">Rishav</option>
+          {receivedFromOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
           <option value="OTHER">Other</option>
         </Select>
       </div>

@@ -141,6 +141,7 @@ export function StatsCards({ stats, mode = "member", activeStatus, onSelectStatu
       if (!onSelectStatus) return
       // Map certain titles to statuses
       const mapping: Record<string, string> = {
+        Collection: "COLLECTION",
         Approved: "APPROVED",
         Pending: "PENDING",
         Rejected: "REJECTED",
@@ -160,7 +161,7 @@ export function StatsCards({ stats, mode = "member", activeStatus, onSelectStatu
   return (
     <div className={gridClass}>
       {cards.map((card) => {
-        const mapped = { Approved: "APPROVED", Pending: "PENDING", Rejected: "REJECTED", Paid: "VERIFIED" }[card.title] || "ALL"
+        const mapped = { Collection: "COLLECTION", Approved: "APPROVED", Pending: "PENDING", Rejected: "REJECTED", Paid: "VERIFIED" }[card.title] || "ALL"
         const isActive = activeStatus === mapped
         return (
           <Card key={card.title} onClick={() => handleClick(card.title)} className={`${isActive ? "ring-2 ring-offset-1 ring-blue-300" : ""} cursor-pointer`}>

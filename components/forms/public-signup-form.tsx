@@ -77,12 +77,12 @@ export function SignupForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="fatherName">Father's Name</Label>
+            <Label htmlFor="fatherName">Father&apos;s Name</Label>
             <Input
               id="fatherName"
               name="fatherName"
               type="text"
-              placeholder="Father's Name"
+              placeholder="Father&apos;s Name"
               required
             />
           </div>

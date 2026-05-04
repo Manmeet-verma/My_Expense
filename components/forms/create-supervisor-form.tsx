@@ -85,12 +85,12 @@ export function CreateSupervisorForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="supervisor-father-name">Father's Name</Label>
+            <Label htmlFor="supervisor-father-name">Father&apos;s Name</Label>
             <Input
               id="supervisor-father-name"
               name="fatherName"
               type="text"
-              placeholder="Father's Name"
+              placeholder="Father&apos;s Name"
               required
             />
           </div>

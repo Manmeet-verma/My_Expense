@@ -12,7 +12,7 @@ interface NavProps {
   user: {
     name: string | null
     email: string
-    role: "ADMIN" | "SUPERVISOR" | "MEMBER"
+    role: "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER"
   }
 }
 

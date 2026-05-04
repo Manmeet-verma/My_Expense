@@ -38,12 +38,12 @@ interface MemberExpense {
   createdAt: string
   adminRemark: string | null
   approvedByName?: string | null
-  approvedByRole?: "ADMIN" | "SUPERVISOR" | "MEMBER" | null
+  approvedByRole?: "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER" | null
   approvedBy?: {
     id: string
     name: string | null
     email: string
-    role: "ADMIN" | "SUPERVISOR" | "MEMBER"
+    role: "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER"
   } | null
 }
 
@@ -56,8 +56,8 @@ interface MemberCollection {
   createdAt: string
 }
 
-function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "MEMBER"): string {
-  if (role === "SUPERVISOR") return "Verifier"
+function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER"): string {
+  if (role === "SUPERVISOR" || role === "VERIFIER") return "Verifier"
   if (role === "ADMIN") return "Admin"
   return "Inputter"
 }
@@ -77,7 +77,16 @@ function getApprovedBy(expense: MemberExpense): string {
   return "Verifier (Verifier)"
 }
 
-function safeParseResponse(text: string): any {
+interface MemberExpensesResponse {
+  error?: string
+  approved?: MemberExpense[]
+  rejected?: MemberExpense[]
+  pending?: MemberExpense[]
+}
+
+type MemberCollectionsResponse = MemberCollection[]
+
+function safeParseResponse(text: string): MemberExpensesResponse | MemberCollectionsResponse | null {
   if (!text) return null
 
   try {
@@ -162,21 +171,22 @@ export default function MembersContent({
         collectionsResponse.text(),
       ])
 
-      const expensesData = safeParseResponse(expensesText)
-      const collectionsData = safeParseResponse(collectionsText)
+      const expensesData = safeParseResponse(expensesText) as MemberExpensesResponse | null
+      const collectionsData = safeParseResponse(collectionsText) as MemberCollectionsResponse | null
+      const parsedExpensesData = expensesData ?? {}
 
       if (!expensesResponse.ok) {
         throw new Error(expensesData?.error || expensesText || "Failed to load expenses")
       }
 
       if (!collectionsResponse.ok) {
-        throw new Error(collectionsData?.error || collectionsText || "Failed to load collections")
+        throw new Error(((collectionsData as { error?: string } | null)?.error) || collectionsText || "Failed to load collections")
       }
 
       setExpensesByStatus({
-        approved: expensesData.approved || [],
-        rejected: expensesData.rejected || [],
-        pending: expensesData.pending || [],
+        approved: parsedExpensesData.approved || [],
+        rejected: parsedExpensesData.rejected || [],
+        pending: parsedExpensesData.pending || [],
       })
       setCollectionFunds(collectionsData || [])
     } catch (error) {
@@ -393,7 +403,7 @@ export default function MembersContent({
               <thead className="bg-gray-50 text-left text-gray-600">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Name</th>
-                  <th className="px-4 py-3 font-semibold">Father's Name</th>
+                  <th className="px-4 py-3 font-semibold">Father&apos;s Name</th>
                   <th className="px-4 py-3 font-semibold">Aadhaar No.</th>
                   <th className="px-4 py-3 font-semibold">Email</th>
                   <th className="px-4 py-3 font-semibold">Expenses</th>

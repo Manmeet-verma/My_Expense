@@ -1,5 +1,4 @@
 import { auth } from "@/lib/auth"
-import Link from "next/link"
 import { redirect } from "next/navigation"
 import { getMembers } from "@/actions/auth"
 import { getAdmins } from "@/actions/auth"
@@ -7,6 +6,12 @@ import { getAllExpenses, getCollectionFundsForLedger, getExpenseStats } from "@/
 import { AdminSection } from "@/components/forms/admin-section"
 import { AdminExpenseManagementTable } from "@/components/admin-expense-management-table"
 import MembersContent from "../members/members-content"
+
+type Admins = Awaited<ReturnType<typeof getAdmins>>
+type Members = Awaited<ReturnType<typeof getMembers>>
+type Expenses = Awaited<ReturnType<typeof getAllExpenses>>
+type CollectionFunds = Awaited<ReturnType<typeof getCollectionFundsForLedger>>
+type ExpenseStats = Awaited<ReturnType<typeof getExpenseStats>>
 
 export default async function AdminDashboardPage() {
   const session = await auth()
@@ -19,11 +24,11 @@ export default async function AdminDashboardPage() {
     redirect("/admin")
   }
 
-  let admins: any[] = []
-  let members: any[] = []
-  let expenses: any[] = []
-  let collectionFunds: any[] = []
-  let stats: any = null
+  let admins: Admins = []
+  let members: Members = []
+  let expenses: Expenses = []
+  let collectionFunds: CollectionFunds = []
+  let stats: ExpenseStats | null = null
 
   try {
     admins = await getAdmins()

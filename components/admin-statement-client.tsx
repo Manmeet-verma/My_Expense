@@ -20,7 +20,7 @@ interface Expense {
     id: string
     name: string | null
     email: string
-    role: "ADMIN" | "SUPERVISOR" | "MEMBER"
+    role: "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER"
   } | null
 }
 
@@ -34,8 +34,8 @@ function formatCategory(category: string): string {
   return category.charAt(0) + category.slice(1).toLowerCase().replace(/_/g, " ")
 }
 
-function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "MEMBER"): string {
-  if (role === "SUPERVISOR") return "Verifier"
+function getRoleLabel(role: "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER"): string {
+  if (role === "SUPERVISOR" || role === "VERIFIER") return "Verifier"
   if (role === "ADMIN") return "Admin"
   return "Inputter"
 }

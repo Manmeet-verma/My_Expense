@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { getExpenseStats, getMyExpenses } from "@/actions/expense"
+import { getExpenseStats, getMyExpenses, getMyFunds } from "@/actions/expense"
 import DashboardMemberView from "@/components/dashboard-member-view"
 
 export default async function DashboardPage() {
@@ -16,6 +16,7 @@ export default async function DashboardPage() {
 
   const stats = await getExpenseStats()
   const expenses = await getMyExpenses()
+  const funds = await getMyFunds()
   const siteName = session.user.name || session.user.email
 
   return (
@@ -24,7 +25,7 @@ export default async function DashboardPage() {
         <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">My Expenses</h1>
       </div>
 
-      <DashboardMemberView stats={stats} expenses={expenses} site={siteName} />
+      <DashboardMemberView stats={stats} expenses={expenses} funds={funds} site={siteName} />
     </div>
   )
 }

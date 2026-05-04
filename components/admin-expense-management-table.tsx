@@ -11,7 +11,7 @@ import { ExportExcelButton } from "@/components/export-excel-button"
 import { formatCurrency, formatDate } from "@/lib/utils"
 
 type ExpenseStatus = "PENDING" | "APPROVED" | "REJECTED" | "PAID"
-type ApproverRole = "ADMIN" | "SUPERVISOR" | "MEMBER"
+type ApproverRole = "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER"
 type VerifyStatus = "VERIFIED" | "REJECTED" | "PENDING"
 type ApprovalStatus = "APPROVED" | "PENDING"
 type DashboardFilter = "all" | "pending" | "approved" | "paid" | "rejected"
@@ -316,11 +316,12 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
       return a.type === "COLLECTION" ? -1 : 1
     })
 
-    let running = openingBalance
-    return transactions.map((entry) => {
-      running += entry.credit - entry.debit
-      return { ...entry, amount: running }
-    })
+    return transactions.reduce<LedgerRow[]>((rows, entry) => {
+      const previousBalance = rows.length === 0 ? openingBalance : rows[rows.length - 1].amount
+      const nextBalance = previousBalance + entry.credit - entry.debit
+      rows.push({ ...entry, amount: nextBalance })
+      return rows
+    }, [])
   }, [filteredCollectionRows, filteredRows, openingBalance])
 
   const totalPages = Math.max(1, Math.ceil(ledgerRows.length / PAGE_SIZE))

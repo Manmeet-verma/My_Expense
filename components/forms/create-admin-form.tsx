@@ -93,12 +93,12 @@ export function CreateAdminForm({ onSuccess, onCancel }: CreateAdminFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="admin-father-name">Father's Name</Label>
+            <Label htmlFor="admin-father-name">Father&apos;s Name</Label>
             <Input
               id="admin-father-name"
               name="fatherName"
               type="text"
-              placeholder="Father's Name"
+              placeholder="Father&apos;s Name"
               required
             />
           </div>
