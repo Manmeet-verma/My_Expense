@@ -88,7 +88,6 @@ export function CreateAdminForm({ onSuccess, onCancel }: CreateAdminFormProps) {
               id="admin-email"
               name="email"
               type="email"
-              placeholder="admin@example.com"
               required
             />
           </div>
@@ -121,8 +120,8 @@ export function CreateAdminForm({ onSuccess, onCancel }: CreateAdminFormProps) {
                 id="admin-password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
                 className="pr-10"
+                autoComplete="new-password"
                 required
               />
               <button

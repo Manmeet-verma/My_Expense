@@ -10,6 +10,11 @@ type Verifier = {
   email: string
 }
 
+type Project = {
+  id: string
+  name: string
+}
+
 type Member = {
   id: string
   name: string | null
@@ -26,13 +31,14 @@ type Member = {
 interface ProjectAssignmentSectionProps {
   members: Member[]
   verifiers: Verifier[]
+  projects: Project[]
 }
 
-export function ProjectAssignmentSection({ members, verifiers }: ProjectAssignmentSectionProps) {
+export function ProjectAssignmentSection({ members, verifiers, projects }: ProjectAssignmentSectionProps) {
   const router = useRouter()
   const [memberId, setMemberId] = useState("")
   const [verifierId, setVerifierId] = useState("")
-  const [projectName, setProjectName] = useState("")
+  const [projectId, setProjectId] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [clearingId, setClearingId] = useState<string | null>(null)
 
@@ -43,6 +49,13 @@ export function ProjectAssignmentSection({ members, verifiers }: ProjectAssignme
     }))
   }, [members, verifiers])
 
+  const verifierAssignmentCounts = useMemo(() => {
+    return groupedAssignments.reduce<Record<string, number>>((counts, group) => {
+      counts[group.verifier.id] = group.inputters.length
+      return counts
+    }, {})
+  }, [groupedAssignments])
+
   const unassignedInputters = useMemo(
     () => members.filter((member) => !member.assignedVerifierId || !member.assignedProject),
     [members]
@@ -51,8 +64,8 @@ export function ProjectAssignmentSection({ members, verifiers }: ProjectAssignme
   async function handleAssign(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
-    if (!memberId || !projectName.trim()) {
-      alert("Please select inputter and enter project name")
+    if (!memberId || !projectId) {
+      alert("Please select inputter and project")
       return
     }
 
@@ -60,7 +73,7 @@ export function ProjectAssignmentSection({ members, verifiers }: ProjectAssignme
     const result = await assignMemberToVerifier({
       memberId,
       verifierId,
-      projectName: projectName.trim(),
+      projectId,
     })
 
     if (result?.error) {
@@ -71,7 +84,7 @@ export function ProjectAssignmentSection({ members, verifiers }: ProjectAssignme
 
     setMemberId("")
     setVerifierId("")
-    setProjectName("")
+    setProjectId("")
     setSubmitting(false)
     router.refresh()
   }
@@ -116,24 +129,36 @@ export function ProjectAssignmentSection({ members, verifiers }: ProjectAssignme
         </select>
 
         <select
+          value={projectId}
+          onChange={(e) => setProjectId(e.target.value)}
+          className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm"
+        >
+          <option value="">Select project</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+
+        <select
           value={verifierId}
           onChange={(e) => setVerifierId(e.target.value)}
           className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm"
         >
           <option value="">No verifier (optional)</option>
-          {verifiers.map((verifier) => (
-            <option key={verifier.id} value={verifier.id}>
-              {verifier.name || verifier.email}
-            </option>
-          ))}
-        </select>
+          {verifiers.map((verifier) => {
+            const assignedCount = verifierAssignmentCounts[verifier.id] ?? 0
+            const isFull = assignedCount >= 2
+            const label = `${verifier.name || verifier.email} (${assignedCount}/2)`
 
-        <input
-          value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
-          placeholder="Project name"
-          className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm"
-        />
+            return (
+              <option key={verifier.id} value={verifier.id} disabled={isFull && verifierId !== verifier.id}>
+                {label}
+              </option>
+            )
+          })}
+        </select>
 
         <button
           type="submit"
@@ -143,6 +168,12 @@ export function ProjectAssignmentSection({ members, verifiers }: ProjectAssignme
           {submitting ? "Assigning..." : "Assign"}
         </button>
       </form>
+
+      {projects.length === 0 && (
+        <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+          Create at least one project before assigning inputters.
+        </div>
+      )}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         {groupedAssignments.map(({ verifier, inputters }) => (

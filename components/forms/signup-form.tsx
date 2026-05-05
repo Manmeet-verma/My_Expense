@@ -72,7 +72,6 @@ export function SignupForm() {
               id="email"
               name="email"
               type="email"
-              placeholder="you@example.com"
               required
             />
           </div>
@@ -105,8 +104,8 @@ export function SignupForm() {
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
                 className="pr-10"
+                autoComplete="new-password"
                 required
               />
               <button

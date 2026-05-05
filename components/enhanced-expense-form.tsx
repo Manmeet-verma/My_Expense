@@ -13,6 +13,8 @@ import { CheckCircle, Plus, Trash2 } from "lucide-react"
 
 
 interface EnhancedExpenseFormProps {
+  memberName?: string
+  budget?: number
   totalAmountUsed: number
   categories: Array<{
     id: string
@@ -24,7 +26,9 @@ interface EnhancedExpenseFormProps {
   collectionAmount?: number
   collectionFrom?: string
 }
-export function EnhancedExpenseForm({ 
+export function EnhancedExpenseForm({
+  memberName,
+  budget,
   totalAmountUsed,
   categories,
   onSuccess,

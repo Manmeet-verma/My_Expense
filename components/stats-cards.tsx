@@ -13,6 +13,8 @@ interface StatsCardsProps {
     approved: number
     rejected: number
     paid?: number
+    pendingAmount?: number
+    rejectedAmount?: number
     totalApprovedAmount: number
     totalPaidAmount?: number
     collectionAmount?: number
@@ -51,28 +53,28 @@ export function StatsCards({ stats, mode = "member", activeStatus, onSelectStatu
     },
     {
       title: "Verified By Supervisor",
-      value: stats.approved,
+      value: formatCurrency(stats.totalApprovedAmount),
       icon: CheckCircle,
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
     {
       title: "Pending",
-      value: stats.pending,
+      value: formatCurrency(stats.pendingAmount ?? 0),
       icon: Clock,
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",
     },
     {
       title: "Rejected",
-      value: stats.rejected,
+      value: formatCurrency(stats.rejectedAmount ?? 0),
       icon: XCircle,
       color: "text-red-600",
       bgColor: "bg-red-50",
     },
     {
       title: "Paid",
-      value: stats.paid ?? 0,
+      value: formatCurrency(stats.totalPaidAmount ?? 0),
       icon: DollarSign,
       color: "text-teal-600",
       bgColor: "bg-teal-50",
@@ -102,29 +104,29 @@ export function StatsCards({ stats, mode = "member", activeStatus, onSelectStatu
       bgColor: "bg-teal-50",
     },
     {
-      title: "Approved Count",
-      value: stats.approved,
+      title: "Approved Expense",
+      value: formatCurrency(stats.totalApprovedAmount),
       icon: CheckCircle,
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
     {
-      title: "Paid Count",
-      value: stats.paid ?? 0,
+      title: "Paid Expense",
+      value: formatCurrency(stats.totalPaidAmount ?? 0),
       icon: DollarSign,
       color: "text-teal-600",
       bgColor: "bg-teal-50",
     },
     {
-      title: "Rejected Count",
-      value: stats.rejected,
+      title: "Rejected Expense",
+      value: formatCurrency(stats.rejectedAmount ?? 0),
       icon: XCircle,
       color: "text-red-600",
       bgColor: "bg-red-50",
     },
     {
-      title: "Pending Count",
-      value: stats.pending,
+      title: "Pending Expense",
+      value: formatCurrency(stats.pendingAmount ?? 0),
       icon: Clock,
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",

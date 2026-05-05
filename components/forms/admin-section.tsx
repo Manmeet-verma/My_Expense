@@ -3,11 +3,9 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { CreateAdminForm } from "@/components/forms/create-admin-form"
-import { AdminChangePasswordButton } from "@/components/forms/admin-change-password-button"
 import { deleteAdmin } from "@/actions/auth"
 import { formatDate } from "@/lib/utils"
-import { UserPlus, Trash2 } from "lucide-react"
+import { Trash2 } from "lucide-react"
 
 type Admin = {
   id: string
@@ -25,7 +23,6 @@ interface AdminSectionProps {
 
 export function AdminSection({ admins, currentAdminId }: AdminSectionProps) {
   const router = useRouter()
-  const [showCreateForm, setShowCreateForm] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState("")
 
@@ -51,25 +48,7 @@ export function AdminSection({ admins, currentAdminId }: AdminSectionProps) {
     <>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Admin Accounts</h2>
-        {!showCreateForm && (
-          <div className="flex gap-2">
-            <AdminChangePasswordButton />
-            <Button onClick={() => setShowCreateForm(true)} size="sm">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Create New Admin
-            </Button>
-          </div>
-        )}
       </div>
-
-      {showCreateForm && (
-        <div className="mb-6">
-          <CreateAdminForm
-            onSuccess={() => setShowCreateForm(false)}
-            onCancel={() => setShowCreateForm(false)}
-          />
-        </div>
-      )}
 
       {error && (
         <div className="mb-4 bg-red-50 text-red-600 text-sm p-3 rounded-lg">

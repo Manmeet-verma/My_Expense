@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, LogOut, Users, Wallet, PanelLeft, FileText, List, UserPlus, Tags, UserRound } from "lucide-react"
+import { LayoutDashboard, LogOut, Users, Wallet, PanelLeft, FileText, List, UserPlus, Tags, UserRound, FolderPlus } from "lucide-react"
 
 interface NavProps {
   user: {
@@ -68,9 +68,15 @@ export function Navigation({ user }: NavProps) {
       visible: isSupervisor,
     },
     {
-      href: "/admin/create-supervisor",
-      label: "Create Verifier",
+      href: "/admin/create-account",
+      label: "Create Account",
       icon: UserPlus,
+      visible: isAdmin,
+    },
+    {
+      href: "/admin/assignments",
+      label: "Create Project",
+      icon: FolderPlus,
       visible: isAdmin,
     },
     {

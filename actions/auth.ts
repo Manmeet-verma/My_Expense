@@ -81,7 +81,11 @@ const deleteSupervisorSchema = z.object({
 const assignMemberSchema = z.object({
   memberId: z.string().min(1, "Inputter ID is required"),
   verifierId: z.string().optional(),
-  projectName: z.string().min(2, "Project name must be at least 2 characters"),
+  projectId: z.string().min(1, "Project ID is required"),
+})
+
+const createProjectSchema = z.object({
+  name: z.string().min(2, "Project name must be at least 2 characters").max(100, "Project name is too long"),
 })
 
 const clearMemberAssignmentSchema = z.object({
@@ -233,6 +237,69 @@ export async function createAdmin(data: z.infer<typeof createAdminSchema>) {
   revalidatePath("/login")
   revalidatePath("/admin")
   return { success: true }
+}
+
+export async function createProject(data: z.infer<typeof createProjectSchema>) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can create projects" }
+  }
+
+  const result = createProjectSchema.safeParse(data)
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const normalizedName = result.data.name.trim()
+
+  if (!prisma || !('project' in prisma)) {
+    console.error('Prisma client missing `project` delegate. Did you run `prisma generate` and `prisma db push`?')
+    return { error: 'Database client not initialized. Run prisma generate/push.' }
+  }
+
+  const existingProject = await prisma.project.findUnique({
+    where: { name: normalizedName },
+    select: { id: true },
+  })
+
+  if (existingProject) {
+    return { error: "Project already exists" }
+  }
+
+  await prisma.project.create({
+    data: {
+      name: normalizedName,
+    },
+  })
+
+  revalidatePath("/admin/assignments")
+  revalidatePath("/admin/dashboard")
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function getProjects() {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return []
+  }
+
+  if (!prisma || !('project' in prisma)) {
+    console.error('Prisma client missing `project` delegate in getProjects()')
+    return []
+  }
+
+  return prisma.project.findMany({
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  })
 }
 
 export async function createSupervisor(data: z.infer<typeof createSupervisorSchema>) {
@@ -509,29 +576,48 @@ export async function assignMemberToVerifier(data: z.infer<typeof assignMemberSc
     return { error: result.error.issues[0].message }
   }
 
-  const { memberId, verifierId, projectName } = result.data
+  const { memberId, verifierId, projectId } = result.data
   const normalizedVerifierId = verifierId?.trim() || null
 
-  const [member, verifier] = await Promise.all([
+  const [member, verifier, project] = await Promise.all([
     prisma.user.findUnique({ where: { id: memberId }, select: { id: true, role: true } }),
     normalizedVerifierId
       ? prisma.user.findUnique({ where: { id: normalizedVerifierId }, select: { id: true, role: true } })
       : Promise.resolve(null),
+    prisma.project.findUnique({ where: { id: projectId }, select: { id: true, name: true } }),
   ])
 
   if (!member || member.role !== "MEMBER") {
     return { error: "Inputter not found" }
   }
 
+  if (!project) {
+    return { error: "Project not found" }
+  }
+
   if (normalizedVerifierId && (!verifier || (verifier.role !== "SUPERVISOR" && verifier.role !== "VERIFIER"))) {
     return { error: "Verifier not found" }
+  }
+
+  if (normalizedVerifierId) {
+    const assignedCount = await prisma.user.count({
+      where: {
+        role: "MEMBER",
+        assignedVerifierId: normalizedVerifierId,
+        NOT: { id: memberId },
+      },
+    })
+
+    if (assignedCount >= 2) {
+      return { error: "This verifier already has 2 inputters assigned" }
+    }
   }
 
   await prisma.user.update({
     where: { id: memberId },
     data: {
       assignedVerifierId: normalizedVerifierId,
-      assignedProject: projectName.trim(),
+      assignedProject: project.name,
     },
   })
 

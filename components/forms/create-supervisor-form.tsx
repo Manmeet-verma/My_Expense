@@ -80,7 +80,6 @@ export function CreateSupervisorForm() {
               id="supervisor-email"
               name="email"
               type="email"
-              placeholder="verifier@example.com"
               required
             />
           </div>
@@ -113,8 +112,8 @@ export function CreateSupervisorForm() {
                 id="supervisor-password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
                 className="pr-10"
+                autoComplete="new-password"
                 required
               />
               <button
