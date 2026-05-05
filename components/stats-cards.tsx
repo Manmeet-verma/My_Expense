@@ -29,28 +29,28 @@ export function StatsCards({ stats, mode = "member", activeStatus, onSelectStatu
 
   const memberCards = [
     {
-      title: "Total Expense",
+      title: "Total Expense Requested",
       value: formatCurrency(totalExpenseAmount),
       icon: TrendingUp,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
     },
     {
-      title: "Collection",
+      title: "Received Fund",
       value: formatCurrency(collectionAmount),
       icon: DollarSign,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",
     },
     {
-      title: "Remaining Collection",
+      title: "Fund Receivable",
       value: formatCurrency(remainingCollection),
       icon: DollarSign,
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",
     },
     {
-      title: "Approved",
+      title: "Verified By Supervisor",
       value: stats.approved,
       icon: CheckCircle,
       color: "text-green-600",
@@ -141,8 +141,8 @@ export function StatsCards({ stats, mode = "member", activeStatus, onSelectStatu
       if (!onSelectStatus) return
       // Map certain titles to statuses
       const mapping: Record<string, string> = {
-        Collection: "COLLECTION",
-        Approved: "APPROVED",
+        "Received Fund": "COLLECTION",
+        "Verified By Supervisor": "APPROVED",
         Pending: "PENDING",
         Rejected: "REJECTED",
         Paid: "VERIFIED",
@@ -161,7 +161,13 @@ export function StatsCards({ stats, mode = "member", activeStatus, onSelectStatu
   return (
     <div className={gridClass}>
       {cards.map((card) => {
-        const mapped = { Collection: "COLLECTION", Approved: "APPROVED", Pending: "PENDING", Rejected: "REJECTED", Paid: "VERIFIED" }[card.title] || "ALL"
+        const mapped = {
+          "Received Fund": "COLLECTION",
+          "Verified By Supervisor": "APPROVED",
+          Pending: "PENDING",
+          Rejected: "REJECTED",
+          Paid: "VERIFIED",
+        }[card.title] || "ALL"
         const isActive = activeStatus === mapped
         return (
           <Card key={card.title} onClick={() => handleClick(card.title)} className={`${isActive ? "ring-2 ring-offset-1 ring-blue-300" : ""} cursor-pointer`}>

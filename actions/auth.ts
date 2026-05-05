@@ -78,6 +78,16 @@ const deleteSupervisorSchema = z.object({
   supervisorId: z.string().min(1, "Verifier ID is required"),
 })
 
+const assignMemberSchema = z.object({
+  memberId: z.string().min(1, "Inputter ID is required"),
+  verifierId: z.string().optional(),
+  projectName: z.string().min(2, "Project name must be at least 2 characters"),
+})
+
+const clearMemberAssignmentSchema = z.object({
+  memberId: z.string().min(1, "Inputter ID is required"),
+})
+
 const adminForgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
   newPassword: z.string().min(6, "New password must be at least 6 characters"),
@@ -433,14 +443,28 @@ export async function getMembers() {
     return []
   }
 
+  const whereClause =
+    session.user.role === "SUPERVISOR"
+      ? { role: "MEMBER" as const, assignedVerifierId: session.user.id }
+      : { role: "MEMBER" as const }
+
   const members = await prisma.user.findMany({
-    where: { role: "MEMBER" },
+    where: whereClause,
     select: {
       id: true,
       name: true,
       fatherName: true,
       aadhaarNo: true,
       email: true,
+      assignedProject: true,
+      assignedVerifierId: true,
+      assignedVerifier: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
       receivedAmount: true,
       createdAt: true,
       expenses: {
@@ -463,11 +487,122 @@ export async function getMembers() {
     fatherName: member.fatherName,
     aadhaarNo: member.aadhaarNo,
     email: member.email,
+    assignedProject: member.assignedProject,
+    assignedVerifierId: member.assignedVerifierId,
+    assignedVerifier: member.assignedVerifier,
     receivedAmount: member.receivedAmount,
     createdAt: member.createdAt,
     _count: member._count,
     totalEdits: member.expenses.reduce((sum, expense) => sum + expense.editCount, 0),
   }))
+}
+
+export async function assignMemberToVerifier(data: z.infer<typeof assignMemberSchema>) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can assign inputters" }
+  }
+
+  const result = assignMemberSchema.safeParse(data)
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { memberId, verifierId, projectName } = result.data
+  const normalizedVerifierId = verifierId?.trim() || null
+
+  const [member, verifier] = await Promise.all([
+    prisma.user.findUnique({ where: { id: memberId }, select: { id: true, role: true } }),
+    normalizedVerifierId
+      ? prisma.user.findUnique({ where: { id: normalizedVerifierId }, select: { id: true, role: true } })
+      : Promise.resolve(null),
+  ])
+
+  if (!member || member.role !== "MEMBER") {
+    return { error: "Inputter not found" }
+  }
+
+  if (normalizedVerifierId && (!verifier || (verifier.role !== "SUPERVISOR" && verifier.role !== "VERIFIER"))) {
+    return { error: "Verifier not found" }
+  }
+
+  await prisma.user.update({
+    where: { id: memberId },
+    data: {
+      assignedVerifierId: normalizedVerifierId,
+      assignedProject: projectName.trim(),
+    },
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/admin/dashboard")
+  revalidatePath("/admin/members")
+  revalidatePath("/dashboard")
+
+  return { success: true }
+}
+
+export async function clearMemberAssignment(data: z.infer<typeof clearMemberAssignmentSchema>) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can clear assignments" }
+  }
+
+  const result = clearMemberAssignmentSchema.safeParse(data)
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { memberId } = result.data
+
+  const member = await prisma.user.findUnique({
+    where: { id: memberId },
+    select: { id: true, role: true },
+  })
+
+  if (!member || member.role !== "MEMBER") {
+    return { error: "Inputter not found" }
+  }
+
+  await prisma.user.update({
+    where: { id: memberId },
+    data: {
+      assignedVerifierId: null,
+      assignedProject: null,
+    },
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/admin/dashboard")
+  revalidatePath("/admin/members")
+  revalidatePath("/dashboard")
+
+  return { success: true }
+}
+
+export async function getMyAssignment() {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "MEMBER") {
+    return null
+  }
+
+  const member = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      assignedProject: true,
+      assignedVerifier: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  })
+
+  return member
 }
 
 export async function getAdmins() {

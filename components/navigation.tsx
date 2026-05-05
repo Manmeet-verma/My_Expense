@@ -39,7 +39,7 @@ export function Navigation({ user }: NavProps) {
     },
     {
       href: "/dashboard/my-fund",
-      label: "Add Collection",
+      label: "Add Fund",
       icon: Wallet,
       visible: user.role === "MEMBER",
     },

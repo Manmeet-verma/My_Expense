@@ -28,6 +28,10 @@ model User {
   aadhaarNo    String?
   password     String
   role         Role      @default(MEMBER)
+  assignedProject String?
+  assignedVerifierId String?
+  assignedVerifier User? @relation("VerifierAssignments", fields: [assignedVerifierId], references: [id], onDelete: SetNull)
+  assignedInputters User[] @relation("VerifierAssignments")
   totalBudget  Float     @default(0)
   receivedAmount Float   @default(0)
   createdAt    DateTime  @default(now())

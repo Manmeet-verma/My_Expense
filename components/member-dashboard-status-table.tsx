@@ -12,6 +12,8 @@ interface MemberDashboardExpense {
   title: string
   category: string
   status: ExpenseStatus
+  approvedByName?: string | null
+  approvedByRole?: "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER" | null
 }
 
 interface Fund {
@@ -37,23 +39,38 @@ function formatCategory(category: string): string {
     .join(" ")
 }
 
-function getDisplayStatus(status: ExpenseStatus): Exclude<DisplayStatus, "ALL" | "COLLECTION"> {
+function getDisplayStatus(
+  status: ExpenseStatus,
+  approvedByRole?: MemberDashboardExpense["approvedByRole"]
+): Exclude<DisplayStatus, "ALL" | "COLLECTION"> {
   if (status === "PAID") return "VERIFIED"
+  if (status === "APPROVED") return "VERIFIED"
   return status
 }
 
-function getStatusBadgeVariant(status: Exclude<DisplayStatus, "ALL" | "COLLECTION">): "warning" | "success" | "destructive" | "secondary" {
+function getStatusBadgeVariant(
+  status: Exclude<DisplayStatus, "ALL" | "COLLECTION">
+): "warning" | "success" | "destructive" | "secondary" {
   if (status === "PENDING") return "warning"
   if (status === "APPROVED") return "success"
   if (status === "REJECTED") return "destructive"
   return "secondary"
 }
 
-function actionTakenBy(status: Exclude<DisplayStatus, "ALL" | "COLLECTION">): string {
+function actionTakenBy(
+  status: Exclude<DisplayStatus, "ALL" | "COLLECTION">,
+  approvedByName?: string | null,
+  approvedByRole?: MemberDashboardExpense["approvedByRole"]
+): string {
   if (status === "PENDING") return "Pending Review"
-  if (status === "APPROVED") return "Verifier"
-  if (status === "REJECTED") return "Verifier"
-  return "Admin"
+  if (status === "APPROVED") {
+    if (approvedByRole === "SUPERVISOR" || approvedByRole === "VERIFIER") {
+      return approvedByName || "Supervisor"
+    }
+    return approvedByName || "Admin"
+  }
+  if (status === "REJECTED") return approvedByName || "Supervisor"
+  return approvedByName || "Supervisor"
 }
 
 function inputterAction(status: Exclude<DisplayStatus, "ALL" | "COLLECTION">): string {
@@ -74,10 +91,12 @@ export function MemberDashboardStatusTable({
   onStatusChange,
 }: MemberDashboardStatusTablePropsExtended) {
   const [activeStatus, setActiveStatus] = useState<DisplayStatus>(externalActiveStatus ?? "ALL")
+  const [selectedSupervisor, setSelectedSupervisor] = useState("ALL")
 
   useEffect(() => {
     if (externalActiveStatus !== undefined && externalActiveStatus !== activeStatus) {
       setActiveStatus(externalActiveStatus)
+      setSelectedSupervisor("ALL")
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalActiveStatus])
@@ -89,7 +108,9 @@ export function MemberDashboardStatusTable({
         site,
         expenseHead: formatCategory(expense.category),
         mainHead: expense.title || "-",
-        status: getDisplayStatus(expense.status),
+        status: getDisplayStatus(expense.status, expense.approvedByRole),
+        approvedByName: expense.approvedByName,
+        approvedByRole: expense.approvedByRole,
       })),
     [expenses, site]
   )
@@ -97,10 +118,44 @@ export function MemberDashboardStatusTable({
   const filteredRows = useMemo(() => {
     if (activeStatus === "ALL") return rows
     if (activeStatus === "COLLECTION") return []
+    if (activeStatus === "APPROVED") {
+      return rows.filter(
+        (row) =>
+          row.status === "VERIFIED" &&
+          (row.approvedByRole === "SUPERVISOR" || row.approvedByRole === "VERIFIER") &&
+          (selectedSupervisor === "ALL" || row.approvedByName === selectedSupervisor)
+      )
+    }
     return rows.filter((row) => row.status === activeStatus)
-  }, [rows, activeStatus])
+  }, [rows, activeStatus, selectedSupervisor])
+
+  const supervisorOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rows
+            .filter((row) => row.approvedByRole === "SUPERVISOR" || row.approvedByRole === "VERIFIER")
+            .map((row) => row.approvedByName)
+            .filter((name): name is string => Boolean(name))
+        )
+      ).sort(),
+    [rows]
+  )
+
+  const emptyStateMessage =
+    activeStatus === "APPROVED"
+      ? "No verified expenses found"
+      : activeStatus === "COLLECTION"
+        ? "No collections found"
+        : "No expenses found for selected status"
 
   const statusButtons: DisplayStatus[] = ["ALL", "PENDING", "REJECTED", "VERIFIED", "APPROVED", "COLLECTION"]
+
+  function getStatusButtonLabel(status: DisplayStatus): string {
+    if (status === "COLLECTION") return "RECEIVED FUND"
+    if (status === "APPROVED") return "VERIFIED BY SUPERVISOR"
+    return status
+  }
 
   return (
     <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
@@ -118,11 +173,29 @@ export function MemberDashboardStatusTable({
                 activeStatus === status ? "border-blue-300 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-700"
               }`}
             >
-              {status}
+              {getStatusButtonLabel(status)}
             </button>
           ))}
         </div>
       </div>
+
+      {activeStatus === "APPROVED" && supervisorOptions.length > 0 && (
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <label className="text-sm font-medium text-gray-700">Supervisor</label>
+          <select
+            value={selectedSupervisor}
+            onChange={(e) => setSelectedSupervisor(e.target.value)}
+            className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm"
+          >
+            <option value="ALL">All Supervisors</option>
+            {supervisorOptions.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="min-w-[980px] w-full text-xs sm:text-sm">
@@ -142,7 +215,7 @@ export function MemberDashboardStatusTable({
                   <th className="px-4 py-3 font-semibold">Expenses Head</th>
                   <th className="px-4 py-3 font-semibold">Main Head</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Action taken by</th>
+                  <th className="px-4 py-3 font-semibold">Verified By Supervisor (Name)</th>
                   <th className="px-4 py-3 font-semibold">Action of Inputter</th>
                 </>
               )}
@@ -174,7 +247,7 @@ export function MemberDashboardStatusTable({
             ) : filteredRows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
-                  No expenses found for selected status
+                  {emptyStateMessage}
                 </td>
               </tr>
             ) : (
@@ -187,7 +260,7 @@ export function MemberDashboardStatusTable({
                   <td className="px-4 py-3">
                     <Badge variant={getStatusBadgeVariant(row.status)}>{row.status}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{actionTakenBy(row.status)}</td>
+                  <td className="px-4 py-3 text-gray-700">{actionTakenBy(row.status, row.approvedByName, row.approvedByRole)}</td>
                   <td className="px-4 py-3 text-gray-700">{inputterAction(row.status)}</td>
                 </tr>
               ))

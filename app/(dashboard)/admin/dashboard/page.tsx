@@ -2,13 +2,16 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getMembers } from "@/actions/auth"
 import { getAdmins } from "@/actions/auth"
+import { getSupervisors } from "@/actions/auth"
 import { getAllExpenses, getCollectionFundsForLedger, getExpenseStats } from "@/actions/expense"
 import { AdminSection } from "@/components/forms/admin-section"
 import { AdminExpenseManagementTable } from "@/components/admin-expense-management-table"
+import { ProjectAssignmentSection } from "@/components/forms/project-assignment-section"
 import MembersContent from "../members/members-content"
 
 type Admins = Awaited<ReturnType<typeof getAdmins>>
 type Members = Awaited<ReturnType<typeof getMembers>>
+type Supervisors = Awaited<ReturnType<typeof getSupervisors>>
 type Expenses = Awaited<ReturnType<typeof getAllExpenses>>
 type CollectionFunds = Awaited<ReturnType<typeof getCollectionFundsForLedger>>
 type ExpenseStats = Awaited<ReturnType<typeof getExpenseStats>>
@@ -26,6 +29,7 @@ export default async function AdminDashboardPage() {
 
   let admins: Admins = []
   let members: Members = []
+  let supervisors: Supervisors = []
   let expenses: Expenses = []
   let collectionFunds: CollectionFunds = []
   let stats: ExpenseStats | null = null
@@ -40,6 +44,12 @@ export default async function AdminDashboardPage() {
     members = await getMembers()
   } catch (error) {
     console.error("Failed to load members:", error)
+  }
+
+  try {
+    supervisors = await getSupervisors()
+  } catch (error) {
+    console.error("Failed to load verifiers:", error)
   }
 
   try {
@@ -68,6 +78,8 @@ export default async function AdminDashboardPage() {
       </div>
 
       <AdminSection admins={admins} currentAdminId={session.user.id} />
+
+      <ProjectAssignmentSection members={members} verifiers={supervisors} />
 
       <div className="mt-10">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
