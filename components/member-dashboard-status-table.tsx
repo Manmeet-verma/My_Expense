@@ -39,10 +39,7 @@ function formatCategory(category: string): string {
     .join(" ")
 }
 
-function getDisplayStatus(
-  status: ExpenseStatus,
-  approvedByRole?: MemberDashboardExpense["approvedByRole"]
-): Exclude<DisplayStatus, "ALL" | "COLLECTION"> {
+function getDisplayStatus(status: ExpenseStatus): Exclude<DisplayStatus, "ALL" | "COLLECTION"> {
   if (status === "PAID") return "VERIFIED"
   if (status === "APPROVED") return "VERIFIED"
   return status
@@ -108,7 +105,7 @@ export function MemberDashboardStatusTable({
         site,
         expenseHead: formatCategory(expense.category),
         mainHead: expense.title || "-",
-        status: getDisplayStatus(expense.status, expense.approvedByRole),
+        status: getDisplayStatus(expense.status),
         approvedByName: expense.approvedByName,
         approvedByRole: expense.approvedByRole,
       })),

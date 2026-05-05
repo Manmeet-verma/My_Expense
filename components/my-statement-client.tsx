@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { Search, CheckCircle, XCircle, Clock, Plus, Wallet } from "lucide-react"
+import { Search, CheckCircle, XCircle, Clock } from "lucide-react"
 import { createFund } from "@/actions/expense"
 import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { Label } from "@/components/ui/label"
@@ -238,7 +238,7 @@ export function MyStatementClient({ userId }: MyStatementClientProps) {
   const [showFundModal, setShowFundModal] = useState(false)
   const searchTimerRef = useRef<number | null>(null)
 
-  async function handleSearch() {
+  const handleSearch = useCallback(async () => {
     if (!fromDate || !toDate) return
 
     setLoading(true)
@@ -269,7 +269,7 @@ export function MyStatementClient({ userId }: MyStatementClientProps) {
     }
 
     setLoading(false)
-  }
+  }, [fromDate, toDate, userId])
 
   useEffect(() => {
     if (!fromDate || !toDate) {
@@ -289,7 +289,7 @@ export function MyStatementClient({ userId }: MyStatementClientProps) {
         window.clearTimeout(searchTimerRef.current)
       }
     }
-  }, [fromDate, toDate])
+  }, [fromDate, toDate, handleSearch])
 
   const approvedTotal = approvedExpenses.reduce((sum, exp) => sum + exp.amount, 0)
   const rejectedTotal = rejectedExpenses.reduce((sum, exp) => sum + exp.amount, 0)

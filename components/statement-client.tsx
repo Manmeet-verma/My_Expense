@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -100,7 +100,7 @@ export function StatementClient({ userId }: { userId: string }) {
   const [hasSearched, setHasSearched] = useState(false)
   const searchTimerRef = useRef<number | null>(null)
 
-  async function handleSearch() {
+  const handleSearch = useCallback(async () => {
     if (!fromDate || !toDate) return
 
     setLoading(true)
@@ -137,7 +137,7 @@ export function StatementClient({ userId }: { userId: string }) {
     }
 
     setLoading(false)
-  }
+  }, [fromDate, toDate, userId])
 
   useEffect(() => {
     if (!fromDate || !toDate) {
@@ -157,7 +157,7 @@ export function StatementClient({ userId }: { userId: string }) {
         window.clearTimeout(searchTimerRef.current)
       }
     }
-  }, [fromDate, toDate])
+  }, [fromDate, toDate, handleSearch])
 
   const allExpenses = [...approvedExpenses, ...rejectedExpenses, ...pendingExpenses]
 

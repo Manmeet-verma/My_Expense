@@ -78,7 +78,7 @@ export const authOptions: NextAuthOptions = {
               where: { id: user.id },
               data: { password: upgradedHash },
             })
-          } catch (error) {
+          } catch {
             // Silently ignore hash upgrade failures to not block login
           }
         }

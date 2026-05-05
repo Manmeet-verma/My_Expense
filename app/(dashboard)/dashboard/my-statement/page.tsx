@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { MyStatementClient } from "@/components/my-statement-client"
-import { Plus } from "lucide-react"
 
 export default async function MyStatementPage() {
   const session = await auth()

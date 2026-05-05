@@ -105,11 +105,7 @@ export function ResetMemberPasswordForm({ members }: ResetMemberPasswordFormProp
               type="email"
               placeholder="inputter@example.com"
               value={selectedEmail ? "" : ""}
-              onChange={(e) => {
-                if (!selectedEmail) {
-                  // Only allow manual entry if dropdown is empty
-                }
-              }}
+              onChange={() => {}}
               disabled={!!selectedEmail}
             />
           </div>
