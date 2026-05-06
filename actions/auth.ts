@@ -97,6 +97,15 @@ const createProjectSchema = z.object({
   name: z.string().min(2, "Project name must be at least 2 characters").max(100, "Project name is too long"),
 })
 
+const updateProjectSchema = z.object({
+  projectId: z.string().min(1, "Project ID is required"),
+  name: z.string().min(2, "Project name must be at least 2 characters").max(100, "Project name is too long"),
+})
+
+const deleteProjectSchema = z.object({
+  projectId: z.string().min(1, "Project ID is required"),
+})
+
 const clearMemberAssignmentSchema = z.object({
   memberId: z.string().min(1, "Inputter ID is required"),
 })
@@ -285,6 +294,99 @@ export async function createProject(data: z.infer<typeof createProjectSchema>) {
   revalidatePath("/admin/assignments")
   revalidatePath("/admin/dashboard")
   revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function updateProject(data: z.infer<typeof updateProjectSchema>) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can edit projects" }
+  }
+
+  const result = updateProjectSchema.safeParse(data)
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { projectId, name } = result.data
+  const normalizedName = name.trim()
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { id: true, name: true },
+  })
+
+  if (!project) {
+    return { error: "Project not found" }
+  }
+
+  const duplicate = await prisma.project.findUnique({
+    where: { name: normalizedName },
+    select: { id: true },
+  })
+
+  if (duplicate && duplicate.id !== projectId) {
+    return { error: "Project already exists" }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.project.update({
+      where: { id: projectId },
+      data: { name: normalizedName },
+    })
+
+    await tx.user.updateMany({
+      where: { assignedProject: project.name },
+      data: { assignedProject: normalizedName },
+    })
+  })
+
+  revalidatePath("/admin/assignments")
+  revalidatePath("/admin/dashboard")
+  revalidatePath("/admin")
+  revalidatePath("/dashboard")
+  return { success: true }
+}
+
+export async function deleteProject(data: z.infer<typeof deleteProjectSchema>) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can delete projects" }
+  }
+
+  const result = deleteProjectSchema.safeParse(data)
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { projectId } = result.data
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { id: true, name: true },
+  })
+
+  if (!project) {
+    return { error: "Project not found" }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.updateMany({
+      where: { assignedProject: project.name },
+      data: { assignedProject: null },
+    })
+
+    await tx.project.delete({
+      where: { id: projectId },
+    })
+  })
+
+  revalidatePath("/admin/assignments")
+  revalidatePath("/admin/dashboard")
+  revalidatePath("/admin")
+  revalidatePath("/dashboard")
   return { success: true }
 }
 

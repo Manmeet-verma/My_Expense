@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { assignMemberToVerifier, clearMemberAssignment } from "@/actions/auth"
+import { Pencil, Trash2 } from "lucide-react"
 
 type Verifier = {
   id: string
@@ -41,6 +42,7 @@ export function ProjectAssignmentSection({ members, verifiers, projects }: Proje
   const [projectId, setProjectId] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [clearingId, setClearingId] = useState<string | null>(null)
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null)
 
   const groupedAssignments = useMemo(() => {
     return verifiers.map((verifier) => ({
@@ -86,7 +88,15 @@ export function ProjectAssignmentSection({ members, verifiers, projects }: Proje
     setVerifierId("")
     setProjectId("")
     setSubmitting(false)
+    setEditingMemberId(null)
     router.refresh()
+  }
+
+  function startEdit(member: Member) {
+    setMemberId(member.id)
+    setProjectId(projects.find((project) => project.name === member.assignedProject)?.id || "")
+    setVerifierId(member.assignedVerifierId || "")
+    setEditingMemberId(member.id)
   }
 
   async function handleClear(memberIdToClear: string) {
@@ -104,6 +114,12 @@ export function ProjectAssignmentSection({ members, verifiers, projects }: Proje
     }
 
     setClearingId(null)
+    if (editingMemberId === memberIdToClear) {
+      setMemberId("")
+      setProjectId("")
+      setVerifierId("")
+      setEditingMemberId(null)
+    }
     router.refresh()
   }
 
@@ -111,7 +127,7 @@ export function ProjectAssignmentSection({ members, verifiers, projects }: Proje
     <section id="project-assignments" className="mt-10 rounded-xl border border-gray-200 bg-white p-5">
       <div className="mb-5">
         <h2 className="text-lg font-semibold text-gray-900">Project And Verifier Assignment</h2>
-        <p className="mt-1 text-sm text-gray-600">Assign each inputter to a project and verifier from the admin dashboard.</p>
+        <p className="mt-1 text-sm text-gray-600">Assign or edit each inputter&apos;s project and verifier from the admin dashboard.</p>
       </div>
 
       <form onSubmit={handleAssign} className="grid gap-3 rounded-lg border border-gray-100 bg-gray-50 p-4 md:grid-cols-4">
@@ -165,7 +181,7 @@ export function ProjectAssignmentSection({ members, verifiers, projects }: Proje
           disabled={submitting}
           className="h-10 rounded-md bg-blue-600 px-4 text-sm font-medium text-white disabled:opacity-60"
         >
-          {submitting ? "Assigning..." : "Assign"}
+          {submitting ? "Saving..." : editingMemberId ? "Update Assignment" : "Assign"}
         </button>
       </form>
 
@@ -189,14 +205,25 @@ export function ProjectAssignmentSection({ members, verifiers, projects }: Proje
                   <li key={member.id} className="rounded-md border border-gray-100 bg-gray-50 p-2">
                     <p className="text-sm font-medium text-gray-900">{member.name || member.email}</p>
                     <p className="text-xs text-gray-600">Project: {member.assignedProject || "-"}</p>
-                    <button
-                      type="button"
-                      onClick={() => handleClear(member.id)}
-                      disabled={clearingId === member.id}
-                      className="mt-1 text-xs text-red-600 hover:text-red-700 disabled:opacity-60"
-                    >
-                      {clearingId === member.id ? "Clearing..." : "Clear Assignment"}
-                    </button>
+                    <div className="mt-1 flex items-center gap-3 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(member)}
+                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleClear(member.id)}
+                        disabled={clearingId === member.id}
+                        className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 disabled:opacity-60"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        {clearingId === member.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
