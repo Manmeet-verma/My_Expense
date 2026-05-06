@@ -9,6 +9,7 @@ type MemberRow = {
   fatherName: string | null
   aadhaarNo: string | null
   email: string
+  assignedProject: string | null
   receivedAmount: number
   totalEdits: number
   createdAt: Date

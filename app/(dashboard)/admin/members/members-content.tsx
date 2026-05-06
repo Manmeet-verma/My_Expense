@@ -16,6 +16,7 @@ interface MemberRow {
   fatherName: string | null
   aadhaarNo: string | null
   email: string
+  assignedProject: string | null
   receivedAmount: number
   totalEdits: number
   createdAt: Date
@@ -325,6 +326,7 @@ export default function MembersContent({
         "Father's Name": member.fatherName || "-",
         "Aadhaar No.": member.aadhaarNo || "-",
         Email: member.email,
+        "Assigned Project": member.assignedProject || "-",
         Expenses: member._count.expenses,
         Collection: member.receivedAmount,
         Edits: member.totalEdits,
@@ -424,6 +426,7 @@ export default function MembersContent({
                   <th className="px-4 py-3 font-semibold">Father&apos;s Name</th>
                   <th className="px-4 py-3 font-semibold">Aadhaar No.</th>
                   <th className="px-4 py-3 font-semibold">Email</th>
+                  <th className="px-4 py-3 font-semibold">Assigned Project</th>
                   <th className="px-4 py-3 font-semibold">Expenses</th>
                   <th className="px-4 py-3 font-semibold">Collection</th>
                   <th className="px-4 py-3 font-semibold">Edits</th>
@@ -434,7 +437,7 @@ export default function MembersContent({
               <tbody>
                 {filteredMembers.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-10 text-center text-gray-500">
+                    <td colSpan={10} className="px-4 py-10 text-center text-gray-500">
                       No inputters found
                     </td>
                   </tr>
@@ -452,6 +455,7 @@ export default function MembersContent({
                       <td className="px-4 py-3 text-gray-700">{member.fatherName || "-"}</td>
                       <td className="px-4 py-3 text-gray-700">{member.aadhaarNo || "-"}</td>
                       <td className="px-4 py-3 text-gray-700">{member.email}</td>
+                      <td className="px-4 py-3 text-gray-700 font-medium">{member.assignedProject || "-"}</td>
                       <td className="px-4 py-3 text-gray-700">{member._count.expenses}</td>
                       <td className="px-4 py-3 text-gray-700">{formatCurrency(member.receivedAmount)}</td>
                       <td className="px-4 py-3 text-gray-700">{member.totalEdits}</td>
