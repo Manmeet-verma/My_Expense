@@ -652,10 +652,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
                         className="h-8 min-w-[120px]"
                       />
                     ) : (
-                      <div>
-                        <div className="font-medium text-gray-900">{row.expense?.assignedProject || row.site}</div>
-                        <div className="text-xs text-gray-500">{row.site}</div>
-                      </div>
+                      row.expense?.assignedProject || row.site
                     )}
                   </td>
                   <td className="px-4 py-3 text-gray-700">
