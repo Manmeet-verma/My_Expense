@@ -335,38 +335,34 @@ export async function getExpenseStats() {
     ? {}
     : { createdById: session.user.id }
 
-  const [total, pending, approved, rejected, paid, totalApprovedAmount, totalPaidAmount, pendingAmount, rejectedAmount, totalCollectionAmount, submittedAmount] =
-    await prisma.$transaction([
-      prisma.expense.count({ where }),
-      prisma.expense.count({ where: { ...where, status: "PENDING" } }),
-      prisma.expense.count({ where: { ...where, status: "APPROVED" } }),
-      prisma.expense.count({ where: { ...where, status: "REJECTED" } }),
-      prisma.expense.count({ where: { ...where, status: "PAID" } }),
-      prisma.expense.aggregate({
-        where: { ...where, status: "APPROVED" },
-        _sum: { amount: true },
-      }),
-      prisma.expense.aggregate({
-        where: { ...where, status: "PAID" },
-        _sum: { amount: true },
-      }),
-      prisma.expense.aggregate({
-        where: { ...where, status: "PENDING" },
-        _sum: { amount: true },
-      }),
-      prisma.expense.aggregate({
-        where: { ...where, status: "REJECTED" },
-        _sum: { amount: true },
-      }),
-      prisma.fund.aggregate({
-        where: canViewGlobalStats ? {} : { userId: session.user.id },
-        _sum: { amount: true },
-      }),
-      prisma.expense.aggregate({
-        where,
-        _sum: { amount: true },
-      }),
-    ])
+  // Avoid running these inside a single interactive transaction to prevent
+  // "expired transaction" timeouts on slow DB connections. Run queries in
+  // parallel with Promise.all instead.
+  const [
+    total,
+    pending,
+    approved,
+    rejected,
+    paid,
+    totalApprovedAmount,
+    totalPaidAmount,
+    pendingAmount,
+    rejectedAmount,
+    totalCollectionAmount,
+    submittedAmount,
+  ] = await Promise.all([
+    prisma.expense.count({ where }),
+    prisma.expense.count({ where: { ...where, status: "PENDING" } }),
+    prisma.expense.count({ where: { ...where, status: "APPROVED" } }),
+    prisma.expense.count({ where: { ...where, status: "REJECTED" } }),
+    prisma.expense.count({ where: { ...where, status: "PAID" } }),
+    prisma.expense.aggregate({ where: { ...where, status: "APPROVED" }, _sum: { amount: true } }),
+    prisma.expense.aggregate({ where: { ...where, status: "PAID" }, _sum: { amount: true } }),
+    prisma.expense.aggregate({ where: { ...where, status: "PENDING" }, _sum: { amount: true } }),
+    prisma.expense.aggregate({ where: { ...where, status: "REJECTED" }, _sum: { amount: true } }),
+    prisma.fund.aggregate({ where: canViewGlobalStats ? {} : { userId: session.user.id }, _sum: { amount: true } }),
+    prisma.expense.aggregate({ where, _sum: { amount: true } }),
+  ])
 
   // Get user's total budget
   let totalBudget = 0
