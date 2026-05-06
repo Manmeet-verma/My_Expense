@@ -2,8 +2,12 @@
 
 import { useState } from "react"
 import { getCategoryMemberExpenses } from "@/actions/category"
+import { deleteCategory } from "@/actions/category"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { ExportExcelButton } from "@/components/export-excel-button"
+import { Button } from "@/components/ui/button"
+import { Pencil, Trash2 } from "lucide-react"
+import { EditCategoryForm } from "@/components/forms/edit-category-form"
 
 type Category = {
   id: string
@@ -24,13 +28,16 @@ type CategoryMemberExpense = {
 
 interface AdminCategoryUsageSectionProps {
   categories: Category[]
+  canManage?: boolean
 }
 
-export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSectionProps) {
+export function AdminCategoryUsageSection({ categories, canManage = false }: AdminCategoryUsageSectionProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [memberExpenses, setMemberExpenses] = useState<CategoryMemberExpense[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
 
   const categoryExportData = categories.map((category, index) => ({
     "Sr No": index + 1,
@@ -68,8 +75,44 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
     setLoading(false)
   }
 
+  async function handleDelete(category: Category) {
+    if (!canManage) return
+
+    const confirmed = window.confirm(`Delete category \"${category.name}\"?`)
+    if (!confirmed) return
+
+    setDeletingId(category.id)
+    const result = await deleteCategory({ categoryId: category.id })
+
+    if (result?.error) {
+      setError(result.error)
+      setDeletingId(null)
+      return
+    }
+
+    if (selectedCategory === category.name) {
+      setSelectedCategory(null)
+      setMemberExpenses([])
+      setError("")
+    }
+
+    setDeletingId(null)
+  }
+
   return (
     <div className="space-y-4">
+      {editingCategory && (
+        <EditCategoryForm
+          category={{
+            id: editingCategory.id,
+            name: editingCategory.name,
+            description: editingCategory.description,
+          }}
+          onCancel={() => setEditingCategory(null)}
+          onSuccess={() => setEditingCategory(null)}
+        />
+      )}
+
       <div className="flex justify-end">
         <ExportExcelButton
           data={categoryExportData}
@@ -88,12 +131,13 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
               <th className="px-4 py-3 font-semibold">Inputters Used</th>
               <th className="px-4 py-3 font-semibold">Expense Count</th>
               <th className="px-4 py-3 font-semibold">Total Expense</th>
+              {canManage && <th className="px-4 py-3 font-semibold">Actions</th>}
             </tr>
           </thead>
           <tbody>
             {categories.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
+                <td colSpan={canManage ? 6 : 5} className="px-4 py-10 text-center text-gray-500">
                   No categories added yet
                 </td>
               </tr>
@@ -111,6 +155,27 @@ export function AdminCategoryUsageSection({ categories }: AdminCategoryUsageSect
                   <td className="px-4 py-3 text-gray-700">{category.memberCount}</td>
                   <td className="px-4 py-3 text-gray-700">{category.expenseCount}</td>
                   <td className="px-4 py-3 text-gray-900">{formatCurrency(category.totalAmount)}</td>
+                  {canManage && (
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="outline" size="sm" onClick={() => setEditingCategory(category)}>
+                          <Pencil className="mr-1 h-4 w-4" />
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void handleDelete(category)}
+                          disabled={deletingId === category.id}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="mr-1 h-4 w-4" />
+                          {deletingId === category.id ? "Deleting..." : "Delete"}
+                        </Button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}

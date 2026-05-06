@@ -17,6 +17,7 @@ export default async function AddCategoryPage() {
 
   const categories = await getCategoryStatistics()
   const canCreate = session.user.role === "ADMIN"
+  const canManage = session.user.role === "ADMIN"
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -34,7 +35,7 @@ export default async function AddCategoryPage() {
             <p className="mt-1 text-sm text-gray-600">Click any category to see the related expense list.</p>
           </div>
           <div className="p-4 overflow-x-auto">
-            <AdminCategoryUsageSection categories={categories} />
+            <AdminCategoryUsageSection categories={categories} canManage={canManage} />
           </div>
         </div>
       </div>

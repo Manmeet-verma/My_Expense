@@ -63,6 +63,16 @@ const createCategorySchema = z.object({
   description: z.string().max(200, "Description is too long").optional(),
 })
 
+const updateCategorySchema = z.object({
+  categoryId: z.string().min(1, "Category ID is required"),
+  name: z.string().min(2, "Category name must be at least 2 characters").max(50, "Category name is too long"),
+  description: z.string().max(200, "Description is too long").optional(),
+})
+
+const deleteCategorySchema = z.object({
+  categoryId: z.string().min(1, "Category ID is required"),
+})
+
 export async function createCategory(data: z.infer<typeof createCategorySchema>) {
   const session = await auth()
 
@@ -95,6 +105,106 @@ export async function createCategory(data: z.infer<typeof createCategorySchema>)
   `
 
   revalidatePath("/admin/add-category")
+  return { success: true }
+}
+
+export async function updateCategory(data: z.infer<typeof updateCategorySchema>) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can edit categories" }
+  }
+
+  const result = updateCategorySchema.safeParse(data)
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { categoryId, name, description } = result.data
+  const normalizedName = normalizeCategoryName(name)
+  const normalizedDescription = description?.trim() || undefined
+
+  const category = await prisma.$queryRaw<CategoryRow[]>`
+    SELECT "id", "name", "description", "createdAt", "updatedAt"
+    FROM "Category"
+    WHERE "id" = ${categoryId}
+    LIMIT 1
+  `
+
+  if (category.length === 0) {
+    return { error: "Category not found" }
+  }
+
+  const duplicate = await prisma.$queryRaw<CategoryRow[]>`
+    SELECT "id", "name", "description", "createdAt", "updatedAt"
+    FROM "Category"
+    WHERE "name" = ${normalizedName} AND "id" <> ${categoryId}
+    LIMIT 1
+  `
+
+  if (duplicate.length > 0) {
+    return { error: "Category already exists" }
+  }
+
+  const currentName = normalizeCategoryName(category[0].name)
+
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`
+      UPDATE "Category"
+      SET "name" = ${normalizedName}, "description" = ${normalizedDescription ?? null}, "updatedAt" = NOW()
+      WHERE "id" = ${categoryId}
+    `
+
+    if (currentName !== normalizedName) {
+      await tx.$executeRaw`
+        UPDATE "Expense"
+        SET "category" = ${normalizedName}
+        WHERE "category" = ${currentName}
+      `
+    }
+  })
+
+  revalidatePath("/admin/add-category")
+  revalidatePath("/admin/dashboard")
+  revalidatePath("/admin")
+  revalidatePath("/dashboard")
+  return { success: true }
+}
+
+export async function deleteCategory(data: z.infer<typeof deleteCategorySchema>) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can delete categories" }
+  }
+
+  const result = deleteCategorySchema.safeParse(data)
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { categoryId } = result.data
+
+  const category = await prisma.$queryRaw<CategoryRow[]>`
+    SELECT "id", "name", "description", "createdAt", "updatedAt"
+    FROM "Category"
+    WHERE "id" = ${categoryId}
+    LIMIT 1
+  `
+
+  if (category.length === 0) {
+    return { error: "Category not found" }
+  }
+
+  await prisma.$executeRaw`
+    DELETE FROM "Category"
+    WHERE "id" = ${categoryId}
+  `
+
+  revalidatePath("/admin/add-category")
+  revalidatePath("/admin/dashboard")
+  revalidatePath("/admin")
+  revalidatePath("/dashboard")
   return { success: true }
 }
 
