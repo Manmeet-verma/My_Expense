@@ -20,6 +20,8 @@ type DisplayStatus = "Pending" | "Payable" | "Rejected" | "Paid"
 interface ExpenseRow {
   id: string
   site: string
+  inputterName: string
+  assignedProject: string
   category: string
   mainHead: string
   description: string
@@ -150,6 +152,8 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
       expenses.map((expense) => ({
         id: expense.id,
         site: expense.createdBy?.name || expense.createdBy?.email || "Unknown",
+        inputterName: expense.createdBy?.name || expense.createdBy?.email || "Unknown",
+        assignedProject: expense.createdBy?.assignedProject || "-",
         category: formatCategory(expense.category),
         mainHead: expense.title || "-",
         description: expense.description || "-",
@@ -335,6 +339,8 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
     () =>
       ledgerRows.map((row, index) => ({
           "Sr No": index + 1,
+          "Inputter Name": row.expense?.inputterName || row.site,
+          "Project Name": row.expense?.assignedProject || row.site,
           Site: row.site,
           Category: row.category,
           "Main Head": row.mainHead,
@@ -371,6 +377,8 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
     const nextEntry: ExpenseRow = {
       id,
       site: "",
+      inputterName: "",
+      assignedProject: "",
       category: "",
       mainHead: "",
       description: "",
@@ -606,7 +614,8 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
             <tr>
               <th className="px-4 py-3 font-semibold">Sr No</th>
               <th className="px-4 py-3 font-semibold">Date</th>
-              <th className="px-4 py-3 font-semibold">Site</th>
+              <th className="px-4 py-3 font-semibold">Inputter Name</th>
+              <th className="px-4 py-3 font-semibold">Project Name (Site)</th>
               <th className="px-4 py-3 font-semibold">Category</th>
               <th className="px-4 py-3 font-semibold">Main Head</th>
               <th className="px-4 py-3 font-semibold">Description</th>
@@ -622,7 +631,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
           <tbody>
             {paginatedRows.length === 0 ? (
               <tr>
-                <td colSpan={13} className="px-4 py-10 text-center text-gray-500">
+                <td colSpan={14} className="px-4 py-10 text-center text-gray-500">
                   No entries found
                 </td>
               </tr>
@@ -631,6 +640,9 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
                 <tr key={row.id} className={`border-t align-top ${row.type === "COLLECTION" ? "border-blue-100 bg-blue-50/30" : "border-gray-100 odd:bg-gray-50"}`}>
                   <td className="px-4 py-3 text-gray-700">{(currentPage - 1) * PAGE_SIZE + index + 1}</td>
                   <td className="px-4 py-3 text-gray-700">{row.expense?.isDraft ? "-" : formatDate(row.txDate)}</td>
+                  <td className="px-4 py-3 text-gray-700 font-medium">
+                    {row.expense?.isDraft ? "-" : row.expense?.inputterName || "-"}
+                  </td>
                   <td className="px-4 py-3 text-gray-700">
                     {row.expense?.isDraft ? (
                       <Input
@@ -640,7 +652,10 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
                         className="h-8 min-w-[120px]"
                       />
                     ) : (
-                      row.site
+                      <div>
+                        <div className="font-medium text-gray-900">{row.expense?.assignedProject || row.site}</div>
+                        <div className="text-xs text-gray-500">{row.site}</div>
+                      </div>
                     )}
                   </td>
                   <td className="px-4 py-3 text-gray-700">

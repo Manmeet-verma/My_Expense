@@ -101,6 +101,7 @@ export async function getAllExpenses() {
           name: true,
           email: true,
           totalBudget: true,
+          assignedProject: true,
         },
       },
       approvedBy: {
