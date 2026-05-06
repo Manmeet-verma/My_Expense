@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { deleteMember } from "@/actions/auth"
-import { approveOrRejectExpense } from "@/actions/expense"
+import { approveOrRejectExpense, verifyExpense } from "@/actions/expense"
 import { ExportExcelButton } from "@/components/export-excel-button"
 import { Input } from "@/components/ui/input"
 import { EditAccountForm } from "@/components/forms/edit-account-form"
@@ -209,7 +209,7 @@ export default function MembersContent({
     }
 
     setApproving(true)
-    const result = await approveOrRejectExpense({ id, status: "APPROVED" })
+    const result = await verifyExpense({ id })
     if (result?.error) {
       alert(result.error)
       setApproving(false)
@@ -235,7 +235,7 @@ export default function MembersContent({
     setApproving(true)
 
     for (const expenseId of selectedPendingIds) {
-      const result = await approveOrRejectExpense({ id: expenseId, status: "APPROVED" })
+      const result = await verifyExpense({ id: expenseId })
       if (result?.error) {
         alert(result.error)
         setApproving(false)

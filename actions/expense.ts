@@ -206,9 +206,9 @@ export async function deleteExpense(id: string) {
 
 export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema>) {
   const session = await auth()
-  
-  if (!session?.user || (session.user.role !== "SUPERVISOR" && session.user.role !== "ADMIN")) {
-    return { error: "Unauthorized - Admin or Verifier access required" }
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Unauthorized - Admin access required" }
   }
 
   const result = approvalSchema.safeParse(data)
@@ -248,10 +248,52 @@ export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema
   return { success: true }
 }
 
+export async function verifyExpense(data: z.infer<typeof approvalSchema>) {
+  const session = await auth()
+
+  if (!session?.user || (session.user.role !== "SUPERVISOR" && session.user.role !== "VERIFIER")) {
+    return { error: "Unauthorized - Supervisor/Verifier access required" }
+  }
+
+  const result = approvalSchema.safeParse(data)
+
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { id, adminRemark } = result.data
+
+  const expense = await prisma.expense.findUnique({ where: { id } })
+
+  if (!expense) {
+    return { error: "Expense not found" }
+  }
+
+  if (expense.status !== "PENDING") {
+    return { error: "Only pending expenses can be verified" }
+  }
+
+  await prisma.expense.update({
+    where: { id },
+    data: {
+      adminRemark,
+      // record who verified it, but keep status as PENDING so admin can final approve/reject
+      approvedById: session.user.id,
+      approvedByName: session.user.name || session.user.email,
+      approvedByRole: session.user.role,
+    },
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/admin/dashboard")
+  revalidatePath("/admin/members")
+  return { success: true }
+}
+
 export async function markExpensePaid(data: z.infer<typeof paymentSchema>) {
   const session = await auth()
 
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user) {
     return { error: "Unauthorized - Admin access required" }
   }
 
@@ -275,15 +317,32 @@ export async function markExpensePaid(data: z.infer<typeof paymentSchema>) {
     return { error: "Only approved expenses can be marked as paid" }
   }
 
-  await prisma.expense.update({
-    where: { id },
-    data: {
-      status: "PAID",
-      approvedById: session.user.id,
-      approvedByName: session.user.name || session.user.email,
-      approvedByRole: session.user.role,
-    },
-  })
+  // Allow admin to mark any approved expense as PAID. Allow member to mark their own approved expense as PAID.
+  if (session.user.role === "ADMIN") {
+    await prisma.expense.update({
+      where: { id },
+      data: {
+        status: "PAID",
+        approvedById: session.user.id,
+        approvedByName: session.user.name || session.user.email,
+        approvedByRole: session.user.role,
+      },
+    })
+  } else if (session.user.role === "MEMBER") {
+    if (expense.createdById !== session.user.id) {
+      return { error: "Members can only mark their own approved expenses as paid" }
+    }
+
+    await prisma.expense.update({
+      where: { id },
+      data: {
+        status: "PAID",
+        // do not overwrite approvedBy fields when member marks paid
+      },
+    })
+  } else {
+    return { error: "Unauthorized - Admin or Owner access required" }
+  }
 
   revalidatePath("/admin")
   revalidatePath("/admin/dashboard")

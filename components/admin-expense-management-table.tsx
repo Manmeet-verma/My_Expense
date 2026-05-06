@@ -94,9 +94,10 @@ function formatCategory(category: string): string {
     .join(" ")
 }
 
-function getVerifyStatus(status: ExpenseStatus): VerifyStatus {
+function getVerifyStatus(status: ExpenseStatus, approvedByRole: ApproverRole | null): VerifyStatus {
   if (status === "REJECTED") return "REJECTED"
   if (status === "APPROVED" || status === "PAID") return "VERIFIED"
+  if (approvedByRole === "SUPERVISOR" || approvedByRole === "VERIFIER") return "VERIFIED"
   return "PENDING"
 }
 
@@ -163,7 +164,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
         approvedByName: expense.approvedBy?.name || null,
         approvedByEmail: expense.approvedBy?.email || null,
         approvedByRole: expense.approvedBy?.role || null,
-        verifyStatus: getVerifyStatus(expense.status),
+        verifyStatus: getVerifyStatus(expense.status, expense.approvedBy?.role || null),
         approvalStatus: getApprovalStatus(expense.status),
         isDraft: false,
       })),
