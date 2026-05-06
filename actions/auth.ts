@@ -78,6 +78,15 @@ const deleteSupervisorSchema = z.object({
   supervisorId: z.string().min(1, "Verifier ID is required"),
 })
 
+const updateAccountSchema = z.object({
+  userId: z.string().min(1, "Account ID is required"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  fatherName: z.string().min(2, "Father's name must be at least 2 characters"),
+  aadhaarNo: z.string().regex(/^\d{12}$/, "Aadhaar No must be exactly 12 digits"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
+})
+
 const assignMemberSchema = z.object({
   memberId: z.string().min(1, "Inputter ID is required"),
   verifierId: z.string().optional(),
@@ -850,6 +859,71 @@ export async function deleteMember(data: z.infer<typeof deleteMemberSchema>) {
 
   revalidatePath("/admin")
   revalidatePath("/admin/members")
+
+  return { success: true }
+}
+
+export async function updateAccount(data: z.infer<typeof updateAccountSchema>) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Only admins can edit accounts" }
+  }
+
+  const result = updateAccountSchema.safeParse(data)
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+
+  const { userId, name, email, fatherName, aadhaarNo, newPassword } = result.data
+  const normalizedEmail = email.trim().toLowerCase()
+
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true },
+  })
+
+  if (!existingUser) {
+    return { error: "Account not found" }
+  }
+
+  const duplicateEmail = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+    select: { id: true },
+  })
+
+  if (duplicateEmail && duplicateEmail.id !== userId) {
+    return { error: "Email already registered" }
+  }
+
+  const dataToUpdate: {
+    name: string
+    email: string
+    fatherName: string
+    aadhaarNo: string
+    password?: string
+  } = {
+    name: name.trim(),
+    email: normalizedEmail,
+    fatherName: fatherName.trim(),
+    aadhaarNo: aadhaarNo.trim(),
+  }
+
+  if (newPassword && newPassword.trim()) {
+    dataToUpdate.password = await hashPassword(newPassword.trim())
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: dataToUpdate,
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/admin/dashboard")
+  revalidatePath("/admin/members")
+  revalidatePath("/admin/create-supervisor")
+  revalidatePath("/admin/create-account")
+  revalidatePath("/admin/verify-members")
 
   return { success: true }
 }

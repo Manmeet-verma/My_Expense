@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { CreateSupervisorForm } from "@/components/forms/create-supervisor-form"
 import { deleteSupervisor } from "@/actions/auth"
 import { formatDate } from "@/lib/utils"
-import { UserPlus, Trash2 } from "lucide-react"
+import { UserPlus, Trash2, Pencil } from "lucide-react"
+import { EditAccountForm } from "@/components/forms/edit-account-form"
 
 type Supervisor = {
   id: string
@@ -26,6 +27,7 @@ export function SupervisorSection({ supervisors }: SupervisorSectionProps) {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState("")
+  const [editingSupervisor, setEditingSupervisor] = useState<Supervisor | null>(null)
 
   async function handleDelete(supervisorId: string) {
     if (!confirm("Are you sure you want to delete this verifier?")) {
@@ -74,6 +76,21 @@ export function SupervisorSection({ supervisors }: SupervisorSectionProps) {
         </div>
       )}
 
+      {editingSupervisor && (
+        <EditAccountForm
+          account={{
+            id: editingSupervisor.id,
+            name: editingSupervisor.name,
+            email: editingSupervisor.email,
+            fatherName: editingSupervisor.fatherName,
+            aadhaarNo: editingSupervisor.aadhaarNo,
+            roleLabel: "Verifier",
+          }}
+          onCancel={() => setEditingSupervisor(null)}
+          onSuccess={() => setEditingSupervisor(null)}
+        />
+      )}
+
       {supervisors.length > 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
           <div className="space-y-3 p-4 md:hidden">
@@ -85,17 +102,29 @@ export function SupervisorSection({ supervisors }: SupervisorSectionProps) {
                 <p className="mt-1 text-sm text-gray-700">{supervisor.email}</p>
                 <p className="mt-1 text-xs text-gray-500">Created: {formatDate(supervisor.createdAt)}</p>
 
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(supervisor.id)}
-                  disabled={deletingId === supervisor.id}
-                  className="mt-3 w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  {deletingId === supervisor.id ? "Deleting..." : "Delete"}
-                </Button>
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingSupervisor(supervisor)}
+                    className="flex-1"
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(supervisor.id)}
+                    disabled={deletingId === supervisor.id}
+                    className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    {deletingId === supervisor.id ? "Deleting..." : "Delete"}
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -120,17 +149,28 @@ export function SupervisorSection({ supervisors }: SupervisorSectionProps) {
                   <td className="px-4 py-3 text-gray-700">{supervisor.email}</td>
                   <td className="px-4 py-3 text-gray-700">{formatDate(supervisor.createdAt)}</td>
                   <td className="px-4 py-3">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(supervisor.id)}
-                      disabled={deletingId === supervisor.id}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      {deletingId === supervisor.id ? "Deleting..." : "Delete"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingSupervisor(supervisor)}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(supervisor.id)}
+                        disabled={deletingId === supervisor.id}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        {deletingId === supervisor.id ? "Deleting..." : "Delete"}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

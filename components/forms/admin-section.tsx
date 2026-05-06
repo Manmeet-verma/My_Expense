@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { deleteAdmin } from "@/actions/auth"
 import { formatDate } from "@/lib/utils"
-import { Trash2 } from "lucide-react"
+import { Trash2, Pencil } from "lucide-react"
+import { EditAccountForm } from "@/components/forms/edit-account-form"
 
 type Admin = {
   id: string
@@ -25,6 +26,7 @@ export function AdminSection({ admins, currentAdminId }: AdminSectionProps) {
   const router = useRouter()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState("")
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null)
 
   async function handleDelete(adminId: string) {
     if (!confirm("Are you sure you want to delete this admin?")) {
@@ -56,6 +58,21 @@ export function AdminSection({ admins, currentAdminId }: AdminSectionProps) {
         </div>
       )}
 
+      {editingAdmin && (
+        <EditAccountForm
+          account={{
+            id: editingAdmin.id,
+            name: editingAdmin.name,
+            email: editingAdmin.email,
+            fatherName: editingAdmin.fatherName,
+            aadhaarNo: editingAdmin.aadhaarNo,
+            roleLabel: "Admin",
+          }}
+          onCancel={() => setEditingAdmin(null)}
+          onSuccess={() => setEditingAdmin(null)}
+        />
+      )}
+
       {admins.length > 0 && (
         <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
           <div className="space-y-3 p-4 md:hidden">
@@ -72,19 +89,31 @@ export function AdminSection({ admins, currentAdminId }: AdminSectionProps) {
                 <p className="mt-1 text-sm text-gray-700">{admin.email}</p>
                 <p className="mt-1 text-xs text-gray-500">Created: {formatDate(admin.createdAt)}</p>
 
-                {admin.id !== currentAdminId && (
+                <div className="mt-3 flex gap-2">
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={() => handleDelete(admin.id)}
-                    disabled={deletingId === admin.id}
-                    className="mt-3 w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => setEditingAdmin(admin)}
+                    className="flex-1"
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    {deletingId === admin.id ? "Deleting..." : "Delete"}
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Edit
                   </Button>
-                )}
+                  {admin.id !== currentAdminId && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(admin.id)}
+                      disabled={deletingId === admin.id}
+                      className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      {deletingId === admin.id ? "Deleting..." : "Delete"}
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -114,19 +143,30 @@ export function AdminSection({ admins, currentAdminId }: AdminSectionProps) {
                   <td className="px-4 py-3 text-gray-700">{admin.email}</td>
                   <td className="px-4 py-3 text-gray-700">{formatDate(admin.createdAt)}</td>
                   <td className="px-4 py-3">
-                    {admin.id !== currentAdminId && (
+                    <div className="flex gap-2">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(admin.id)}
-                        disabled={deletingId === admin.id}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => setEditingAdmin(admin)}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        {deletingId === admin.id ? "Deleting..." : "Delete"}
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Edit
                       </Button>
-                    )}
+                      {admin.id !== currentAdminId && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(admin.id)}
+                          disabled={deletingId === admin.id}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          {deletingId === admin.id ? "Deleting..." : "Delete"}
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

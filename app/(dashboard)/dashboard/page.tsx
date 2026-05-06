@@ -19,7 +19,7 @@ export default async function DashboardPage() {
   const expenses = await getMyExpenses()
   const funds = await getMyFunds()
   const assignment = await getMyAssignment()
-  const siteName = session.user.name || session.user.email
+  const siteName = assignment?.assignedProject || session.user.name || session.user.email
 
   return (
     <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-8 lg:px-8">

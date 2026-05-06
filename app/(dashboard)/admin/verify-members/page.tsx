@@ -10,6 +10,8 @@ import { MemberPasswordCard } from './member-password-card'
 type MemberRow = {
   id: string
   name: string | null
+  fatherName: string | null
+  aadhaarNo: string | null
   email: string
   createdAt: Date
   _count: {

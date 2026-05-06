@@ -3,12 +3,15 @@
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, AlertCircle, RefreshCw } from 'lucide-react'
+import { CheckCircle, AlertCircle, RefreshCw, Pencil } from 'lucide-react'
 import { verifyMemberPassword } from '@/actions/auth'
+import { EditAccountForm } from '@/components/forms/edit-account-form'
 
 type MemberRow = {
   id: string
   name: string | null
+  fatherName: string | null
+  aadhaarNo: string | null
   email: string
   createdAt: Date
   _count: {
@@ -25,6 +28,7 @@ type PasswordStatus = {
 export function MemberPasswordCard({ member }: { member: MemberRow }) {
   const [status, setStatus] = React.useState<PasswordStatus | null>(null)
   const [loading, setLoading] = React.useState(false)
+  const [editing, setEditing] = React.useState(false)
 
   const handleCheck = React.useCallback(async () => {
     setLoading(true)
@@ -47,7 +51,22 @@ export function MemberPasswordCard({ member }: { member: MemberRow }) {
   const isError = status?.error
 
   return (
-    <Card>
+    <>
+      {editing && (
+        <EditAccountForm
+          account={{
+            id: member.id,
+            name: member.name,
+            email: member.email,
+            fatherName: member.fatherName || "",
+            aadhaarNo: member.aadhaarNo || "",
+            roleLabel: "Inputter",
+          }}
+          onCancel={() => setEditing(false)}
+          onSuccess={() => setEditing(false)}
+        />
+      )}
+      <Card>
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -56,6 +75,14 @@ export function MemberPasswordCard({ member }: { member: MemberRow }) {
           </div>
 
           <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setEditing(true)}
+              variant="outline"
+              size="sm"
+            >
+              <Pencil className="h-4 w-4 mr-1" />
+              Edit
+            </Button>
             {!isError && status && (
               <div className="flex items-center gap-2">
                 {hasPassword ? (
@@ -95,6 +122,7 @@ export function MemberPasswordCard({ member }: { member: MemberRow }) {
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </>
   )
 }

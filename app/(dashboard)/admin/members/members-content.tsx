@@ -7,6 +7,8 @@ import { deleteMember } from "@/actions/auth"
 import { approveOrRejectExpense } from "@/actions/expense"
 import { ExportExcelButton } from "@/components/export-excel-button"
 import { Input } from "@/components/ui/input"
+import { EditAccountForm } from "@/components/forms/edit-account-form"
+import { Pencil } from "lucide-react"
 
 interface MemberRow {
   id: string
@@ -105,6 +107,7 @@ export default function MembersContent({
 }: MembersContentProps) {
   const router = useRouter()
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [editingMember, setEditingMember] = useState<MemberRow | null>(null)
   const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null)
   const [activeView, setActiveView] = useState<ExpenseView>("pending")
   const [loadingExpenses, setLoadingExpenses] = useState(false)
@@ -377,6 +380,21 @@ export default function MembersContent({
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-white">
+          {editingMember && (
+            <EditAccountForm
+              account={{
+                id: editingMember.id,
+                name: editingMember.name,
+                email: editingMember.email,
+                fatherName: editingMember.fatherName,
+                aadhaarNo: editingMember.aadhaarNo,
+                roleLabel: "Inputter",
+              }}
+              onCancel={() => setEditingMember(null)}
+              onSuccess={() => setEditingMember(null)}
+            />
+          )}
+
           <div className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-600">From</span>
@@ -442,6 +460,13 @@ export default function MembersContent({
                         {canManage ? (
                           <div className="flex items-center gap-3">
                             <button
+                              onClick={() => setEditingMember(member)}
+                              className="text-blue-600 hover:text-blue-800 text-sm"
+                            >
+                              <Pencil className="inline-block h-4 w-4 mr-1" />
+                              Edit
+                            </button>
+                            <button
                               onClick={() => handleDelete(member.id)}
                               disabled={deletingId === member.id}
                               className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
@@ -496,13 +521,22 @@ export default function MembersContent({
                     </div>
                   </div>
                   {canManage ? (
-                    <button
-                      onClick={() => handleDelete(member.id)}
-                      disabled={deletingId === member.id}
-                      className="w-full mt-2 py-2 text-sm text-red-600 border border-red-200 rounded hover:bg-red-50 disabled:opacity-50"
-                    >
-                      {deletingId === member.id ? "Deleting..." : "Delete Inputter"}
-                    </button>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={() => setEditingMember(member)}
+                        className="w-full py-2 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50"
+                      >
+                        <Pencil className="inline-block h-4 w-4 mr-1" />
+                        Edit Inputter
+                      </button>
+                      <button
+                        onClick={() => handleDelete(member.id)}
+                        disabled={deletingId === member.id}
+                        className="w-full py-2 text-sm text-red-600 border border-red-200 rounded hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {deletingId === member.id ? "Deleting..." : "Delete Inputter"}
+                      </button>
+                    </div>
                   ) : (
                     <p className="w-full mt-2 py-2 text-center text-xs text-gray-500 border border-gray-200 rounded">
                       View only
