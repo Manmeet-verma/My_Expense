@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { getAllExpenses, getCollectionFundsForLedger, getExpenseStats } from "@/actions/expense"
 import { getMembers } from "@/actions/auth"
 import { AdminExpenseManagementTable } from "@/components/admin-expense-management-table"
+import { SupervisorInputterFilter } from '@/components/supervisor-inputter-filter'
 import MembersContent from "./members/members-content"
 
 type MemberRow = {
@@ -56,18 +57,22 @@ export default async function AdminPage() {
         <h2 className="text-lg font-semibold text-gray-900">Inputter Accounts</h2>
       </div>
 
-      <AdminExpenseManagementTable
-        expenses={expenses}
-        totalReceivedAmount={stats?.collectionAmount ?? 0}
-        collectionFunds={collectionFunds}
-        afterCardsContent={
-          <MembersContent
-            members={members}
-            canManage={isAdmin || isSupervisor}
-            canApproveExpenses={isSupervisor}
-          />
-        }
-      />
+      {isSupervisor ? (
+        <SupervisorInputterFilter members={members} />
+      ) : (
+        <AdminExpenseManagementTable
+          expenses={expenses}
+          totalReceivedAmount={stats?.collectionAmount ?? 0}
+          collectionFunds={collectionFunds}
+          afterCardsContent={
+            <MembersContent
+              members={members}
+              canManage={isAdmin || isSupervisor}
+              canApproveExpenses={isSupervisor}
+            />
+          }
+        />
+      )}
     </div>
   )
 }
