@@ -83,7 +83,7 @@ export default async function AdminDashboardPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="mt-1 text-gray-600">Manage expense heads and admin accounts</p>
+        <p className="mt-1 text-gray-600">Manage expense heads</p>
       </div>
 
       <AdminSection admins={admins} currentAdminId={session.user.id} />
