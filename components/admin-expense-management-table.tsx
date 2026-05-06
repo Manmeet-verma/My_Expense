@@ -13,7 +13,7 @@ import { formatCurrency, formatDate } from "@/lib/utils"
 type ExpenseStatus = "PENDING" | "APPROVED" | "REJECTED" | "PAID"
 type ApproverRole = "ADMIN" | "SUPERVISOR" | "VERIFIER" | "MEMBER"
 type VerifyStatus = "VERIFIED" | "REJECTED" | "PENDING"
-type ApprovalStatus = "APPROVED" | "PENDING"
+type ApprovalStatus = "APPROVED" | "PENDING" | "REJECTED"
 type DashboardFilter = "all" | "pending" | "approved" | "paid" | "rejected"
 type DisplayStatus = "Pending" | "Payable" | "Rejected" | "Paid"
 
@@ -102,6 +102,7 @@ function getVerifyStatus(status: ExpenseStatus, approvedByRole: ApproverRole | n
 }
 
 function getApprovalStatus(status: ExpenseStatus): ApprovalStatus {
+  if (status === "REJECTED") return "REJECTED"
   if (status === "APPROVED" || status === "PAID") return "APPROVED"
   return "PENDING"
 }
@@ -745,8 +746,9 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
                         onChange={(e) => updateDraftEntry(row.expense!.id, "approvalStatus", e.target.value as ApprovalStatus)}
                         className="h-8 rounded-md border border-gray-300 bg-white px-2 text-xs sm:text-sm"
                       >
-                        <option value="APPROVED">Approved</option>
                         <option value="PENDING">Pending</option>
+                        <option value="APPROVED">Approved</option>
+                        <option value="REJECTED">Rejected</option>
                       </select>
                     ) : row.expense ? (
                       row.expense.approvalStatus
