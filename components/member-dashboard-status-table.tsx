@@ -1,8 +1,15 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { formatCurrency, formatDate } from "@/lib/utils"
+import { deleteExpense } from "@/actions/expense"
+import { broadcastExpenseChange } from "@/lib/supabase/realtime"
+import { EditExpenseModal } from "@/components/edit-expense-modal"
+import { DeleteExpenseConfirm } from "@/components/delete-expense-confirm"
+import { Edit, Trash2 } from "lucide-react"
 
 type ExpenseStatus = "PENDING" | "APPROVED" | "REJECTED" | "PAID"
 type DisplayStatus = "PENDING" | "APPROVED" | "REJECTED" | "VERIFIED" | "COLLECTION" | "ALL"
@@ -10,6 +17,8 @@ type DisplayStatus = "PENDING" | "APPROVED" | "REJECTED" | "VERIFIED" | "COLLECT
 interface MemberDashboardExpense {
   id: string
   title: string
+  description: string | null
+  amount: number
   category: string
   status: ExpenseStatus
   approvedByName?: string | null
@@ -87,8 +96,12 @@ export function MemberDashboardStatusTable({
   activeStatus: externalActiveStatus,
   onStatusChange,
 }: MemberDashboardStatusTablePropsExtended) {
+  const router = useRouter()
   const [activeStatus, setActiveStatus] = useState<DisplayStatus>(externalActiveStatus ?? "ALL")
   const [selectedSupervisor, setSelectedSupervisor] = useState("ALL")
+  const [editingExpense, setEditingExpense] = useState<MemberDashboardExpense | null>(null)
+  const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (externalActiveStatus !== undefined && externalActiveStatus !== activeStatus) {
@@ -154,8 +167,23 @@ export function MemberDashboardStatusTable({
     return status
   }
 
+  const deleteConfirmExpense = expenses.find((e) => e.id === deletingExpenseId)
+
+  async function handleDelete() {
+    if (!deletingExpenseId) return
+    setIsDeleting(true)
+    const result = await deleteExpense(deletingExpenseId)
+    if (result?.success) {
+      void broadcastExpenseChange("member-delete")
+      router.refresh()
+    }
+    setIsDeleting(false)
+    setDeletingExpenseId(null)
+  }
+
   return (
-    <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
+    <>
+      <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Expense Checking Status (Site Wise)</h2>
         <div className="flex flex-wrap gap-2">
@@ -214,6 +242,7 @@ export function MemberDashboardStatusTable({
                   <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 font-semibold">Verified By Supervisor (Name)</th>
                   <th className="px-4 py-3 font-semibold">Action of Inputter</th>
+                  <th className="px-4 py-3 font-semibold">Actions</th>
                 </>
               )}
             </tr>
@@ -259,6 +288,28 @@ export function MemberDashboardStatusTable({
                   </td>
                   <td className="px-4 py-3 text-gray-700">{actionTakenBy(row.status, row.approvedByName, row.approvedByRole)}</td>
                   <td className="px-4 py-3 text-gray-700">{inputterAction(row.status)}</td>
+                  <td className="px-4 py-3">
+                    {row.status === "PENDING" && (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingExpense(expenses.find((e) => e.id === row.id) || null)}
+                          title="Edit pending expense"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setDeletingExpenseId(row.id)}
+                          title="Delete pending expense"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))
             )}
@@ -266,5 +317,31 @@ export function MemberDashboardStatusTable({
         </table>
       </div>
     </div>
+
+      {editingExpense && (
+        <EditExpenseModal
+          expense={editingExpense}
+          budget={0}
+          totalAmountUsed={0}
+          isOpen={Boolean(editingExpense)}
+          onClose={() => setEditingExpense(null)}
+          onSuccess={() => {
+            void broadcastExpenseChange("member-edit")
+            setEditingExpense(null)
+            router.refresh()
+          }}
+        />
+      )}
+
+      {deleteConfirmExpense && (
+        <DeleteExpenseConfirm
+          isOpen={Boolean(deletingExpenseId)}
+          onClose={() => setDeletingExpenseId(null)}
+          onConfirm={handleDelete}
+          expenseTitle={deleteConfirmExpense.title}
+          isLoading={isDeleting}
+        />
+      )}
+    </>
   )
 }

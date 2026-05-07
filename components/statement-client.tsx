@@ -6,7 +6,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { Search, CheckCircle, XCircle, Clock, DollarSign, List } from "lucide-react"
+import { Search, CheckCircle, XCircle, Clock, DollarSign, List, Edit, Trash2 } from "lucide-react"
+import { deleteExpense } from "@/actions/expense"
+import { broadcastExpenseChange } from "@/lib/supabase/realtime"
+import { EditExpenseModal } from "@/components/edit-expense-modal"
+import { DeleteExpenseConfirm } from "@/components/delete-expense-confirm"
 
 interface Expense {
   id: string
@@ -98,6 +102,9 @@ export function StatementClient({ userId }: { userId: string }) {
   const [activeTab, setActiveTab] = useState<TabType>("collection")
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
+  const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const searchTimerRef = useRef<number | null>(null)
 
   const handleSearch = useCallback(async () => {
@@ -214,8 +221,24 @@ export function StatementClient({ userId }: { userId: string }) {
     collection: "text-purple-600",
   }
 
+  const allExpenses = [...approvedExpenses, ...rejectedExpenses, ...pendingExpenses]
+  const deleteConfirmExpense = allExpenses.find((e) => e.id === deletingExpenseId)
+
+  async function handleDelete() {
+    if (!deletingExpenseId) return
+    setIsDeleting(true)
+    const result = await deleteExpense(deletingExpenseId)
+    if (result?.success) {
+      void broadcastExpenseChange("member-delete")
+      router.refresh()
+    }
+    setIsDeleting(false)
+    setDeletingExpenseId(null)
+  }
+
   return (
-    <div className="space-y-4">
+    <>
+      <div className="space-y-4">
       <Card className="bg-white">
         <CardContent className="p-3">
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-2">
@@ -373,6 +396,7 @@ export function StatementClient({ userId }: { userId: string }) {
                         <th className="px-2 py-1.5 font-medium text-gray-600 text-right">Amount</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600">Status</th>
                         <th className="px-2 py-1.5 font-medium text-gray-600">Approved By</th>
+                        <th className="px-2 py-1.5 font-medium text-gray-600">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -397,6 +421,28 @@ export function StatementClient({ userId }: { userId: string }) {
                             </span>
                           </td>
                           <td className="px-2 py-1.5 text-gray-700">{getApprovedBy(expense)}</td>
+                          <td className="px-2 py-1.5">
+                            {expense.status === "PENDING" && (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setEditingExpense(expense)}
+                                  title="Edit pending expense"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => setDeletingExpenseId(expense.id)}
+                                  title="Delete pending expense"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -408,5 +454,31 @@ export function StatementClient({ userId }: { userId: string }) {
         </>
       )}
     </div>
+
+      {editingExpense && (
+        <EditExpenseModal
+          expense={editingExpense}
+          budget={0}
+          totalAmountUsed={0}
+          isOpen={Boolean(editingExpense)}
+          onClose={() => setEditingExpense(null)}
+          onSuccess={() => {
+            void broadcastExpenseChange("member-edit")
+            setEditingExpense(null)
+            router.refresh()
+          }}
+        />
+      )}
+
+      {deleteConfirmExpense && (
+        <DeleteExpenseConfirm
+          isOpen={Boolean(deletingExpenseId)}
+          onClose={() => setDeletingExpenseId(null)}
+          onConfirm={handleDelete}
+          expenseTitle={deleteConfirmExpense.title}
+          isLoading={isDeleting}
+        />
+      )}
+    </>
   )
 }
