@@ -39,6 +39,13 @@ export function LiveDataSync({ intervalMs = 30000 }: LiveDataSyncProps) {
       refreshWithCooldown()
     })
 
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "expense-updates") {
+        refreshWithCooldown()
+      }
+    }
+    window.addEventListener("storage", handleStorage)
+
     const handleVisible = () => {
       if (document.visibilityState === "visible") {
         refreshWithCooldown()
@@ -58,6 +65,7 @@ export function LiveDataSync({ intervalMs = 30000 }: LiveDataSyncProps) {
 
     return () => {
       unsubscribe()
+      window.removeEventListener("storage", handleStorage)
       document.removeEventListener("visibilitychange", handleVisible)
       if (timer) {
         window.clearInterval(timer)

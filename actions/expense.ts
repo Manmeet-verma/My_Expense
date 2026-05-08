@@ -227,8 +227,10 @@ export async function approveOrRejectExpense(data: z.infer<typeof approvalSchema
     return { error: "Expense not found" }
   }
 
-  if (expense.status !== "PENDING") {
-    return { error: "Only pending expenses can be approved or rejected" }
+  // Allow approving/rejecting PENDING expenses or REJECTED expenses that were rejected by supervisor/verifier
+  const isSupervisorRejected = expense.status === "REJECTED" && (expense.approvedByRole === "SUPERVISOR" || expense.approvedByRole === "VERIFIER")
+  if (expense.status !== "PENDING" && !isSupervisorRejected) {
+    return { error: "Only pending or supervisor-rejected expenses can be processed" }
   }
 
   await prisma.expense.update({
@@ -261,7 +263,7 @@ export async function verifyExpense(data: z.infer<typeof approvalSchema>) {
     return { error: result.error.issues[0].message }
   }
 
-  const { id, adminRemark } = result.data
+  const { id, status, adminRemark } = result.data
 
   const expense = await prisma.expense.findUnique({ where: { id } })
 
@@ -270,14 +272,21 @@ export async function verifyExpense(data: z.infer<typeof approvalSchema>) {
   }
 
   if (expense.status !== "PENDING") {
-    return { error: "Only pending expenses can be verified" }
+    return { error: "Only pending expenses can be processed" }
   }
 
+  if (status === "REJECTED" && (!adminRemark || !adminRemark.trim())) {
+    return { error: "Rejection reason is required" }
+  }
+
+  // When a supervisor/verifier rejects an expense, set status to REJECTED
+  // but record who rejected it so admin can see the override option
   await prisma.expense.update({
     where: { id },
     data: {
+      status: status === "REJECTED" ? "REJECTED" : "PENDING",
       adminRemark,
-      // record who verified it, but keep status as PENDING so admin can final approve/reject
+      // record who verified/rejected it (supervisor/verifier)
       approvedById: session.user.id,
       approvedByName: session.user.name || session.user.email,
       approvedByRole: session.user.role,

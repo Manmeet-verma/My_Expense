@@ -52,7 +52,7 @@ export function StatsCards({ stats, mode = "member", activeStatus, onSelectStatu
       bgColor: "bg-emerald-50",
     },
     {
-      title: "Verified By Supervisor",
+      title: "Approved",
       value: formatCurrency(stats.totalApprovedAmount),
       icon: CheckCircle,
       color: "text-green-600",
@@ -144,10 +144,10 @@ export function StatsCards({ stats, mode = "member", activeStatus, onSelectStatu
       // Map certain titles to statuses
       const mapping: Record<string, string> = {
         "Received Fund": "COLLECTION",
-        "Verified By Supervisor": "APPROVED",
+        "Approved": "APPROVED",
         Pending: "PENDING",
         Rejected: "REJECTED",
-        Paid: "VERIFIED",
+        Paid: "PAID",
       }
       const mapped = mapping[title] || "ALL"
       // toggle: if already active, clear to ALL
@@ -165,10 +165,10 @@ export function StatsCards({ stats, mode = "member", activeStatus, onSelectStatu
       {cards.map((card) => {
         const mapped = {
           "Received Fund": "COLLECTION",
-          "Verified By Supervisor": "APPROVED",
+          "Approved": "APPROVED",
           Pending: "PENDING",
           Rejected: "REJECTED",
-          Paid: "VERIFIED",
+          Paid: "PAID",
         }[card.title] || "ALL"
         const isActive = activeStatus === mapped
         return (

@@ -28,12 +28,13 @@ export default async function AdminPage() {
     redirect("/login")
   }
 
-  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR") {
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR" && session.user.role !== "VERIFIER") {
     redirect("/dashboard")
   }
 
   const isAdmin = session.user.role === "ADMIN"
   const isSupervisor = session.user.role === "SUPERVISOR"
+  const isVerifier = session.user.role === "VERIFIER"
 
   const expenses = await getAllExpenses()
   const stats = await getExpenseStats()
@@ -58,10 +59,11 @@ export default async function AdminPage() {
         <h2 className="text-lg font-semibold text-gray-900">Inputter Accounts</h2>
       </div>
 
-      {isSupervisor ? (
-        <SupervisorInputterFilter members={members} />
+      {isSupervisor || isVerifier ? (
+        <SupervisorInputterFilter members={members} actorRole={isVerifier ? "VERIFIER" : "SUPERVISOR"} />
       ) : (
         <AdminExpenseManagementTable
+          actorRole="ADMIN"
           expenses={expenses}
           totalReceivedAmount={stats?.collectionAmount ?? 0}
           collectionFunds={collectionFunds}
@@ -69,7 +71,7 @@ export default async function AdminPage() {
             <MembersContent
               members={members}
               canManage={isAdmin || isSupervisor}
-              canApproveExpenses={isSupervisor}
+              canApproveExpenses={isSupervisor || isVerifier}
             />
           }
         />

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import type { ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { approveOrRejectExpense, markExpensePaid } from "@/actions/expense"
+import { approveOrRejectExpense, markExpensePaid, verifyExpense } from "@/actions/expense"
 import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,7 @@ interface ExpenseRow {
   category: string
   mainHead: string
   description: string
+  adminRemark: string | null
   createdAt: Date | null
   amount: number
   expenseStatus: ExpenseStatus
@@ -37,6 +38,7 @@ interface ExpenseRow {
 }
 
 interface AdminExpenseManagementTableProps {
+  actorRole?: "ADMIN" | "SUPERVISOR" | "VERIFIER"
   totalReceivedAmount: number
   afterCardsContent?: ReactNode
   collectionFunds: Array<{
@@ -54,6 +56,7 @@ interface AdminExpenseManagementTableProps {
     id: string
     title: string
     description: string | null
+    adminRemark?: string | null
     createdAt: Date
     amount: number
     category: string
@@ -61,6 +64,7 @@ interface AdminExpenseManagementTableProps {
     createdBy?: {
       name: string | null
       email: string
+      assignedProject?: string | null
     } | null
     approvedBy?: {
       name: string | null
@@ -138,7 +142,13 @@ function getApprovedBy(
   return "Verifier (Verifier)"
 }
 
-export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsContent, collectionFunds, expenses }: AdminExpenseManagementTableProps) {
+export function AdminExpenseManagementTable({
+  actorRole = "ADMIN",
+  totalReceivedAmount,
+  afterCardsContent,
+  collectionFunds,
+  expenses,
+}: AdminExpenseManagementTableProps) {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<"ALL" | VerifyStatus>("ALL")
@@ -159,6 +169,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
         category: formatCategory(expense.category),
         mainHead: expense.title || "-",
         description: expense.description || "-",
+        adminRemark: expense.adminRemark || null,
         createdAt: expense.createdAt,
         amount: expense.amount,
         expenseStatus: expense.status,
@@ -316,7 +327,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
     }))
 
     const transactions = [...collectionEntries, ...expenseEntries].sort((a, b) => {
-      const diff = a.txDate.getTime() - b.txDate.getTime()
+      const diff = b.txDate.getTime() - a.txDate.getTime()
       if (diff !== 0) return diff
       if (a.type === b.type) return 0
       return a.type === "COLLECTION" ? -1 : 1
@@ -384,6 +395,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
       category: "",
       mainHead: "",
       description: "",
+      adminRemark: null,
       createdAt: null,
       amount: 0,
       expenseStatus: "PENDING",
@@ -417,13 +429,16 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
   async function handleApprove(id: string) {
     if (processingId) return
     setProcessingId(id)
-    const result = await approveOrRejectExpense({ id, status: "APPROVED" })
+    const result = actorRole === "ADMIN"
+      ? await approveOrRejectExpense({ id, status: "APPROVED" })
+      : await verifyExpense({ id, status: "APPROVED" })
     if (result?.error) {
       alert(result.error)
       setProcessingId(null)
       return
     }
-    void broadcastExpenseChange("admin-approve")
+    void broadcastExpenseChange(actorRole === "ADMIN" ? "admin-approve" : "member-verified")
+    setCurrentPage(1)
     router.refresh()
     setProcessingId(null)
   }
@@ -431,13 +446,27 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
   async function handleReject(id: string) {
     if (processingId) return
     setProcessingId(id)
-    const result = await approveOrRejectExpense({ id, status: "REJECTED" })
+
+    let result: { error?: string; success?: boolean } | undefined
+    if (actorRole === "ADMIN") {
+      result = await approveOrRejectExpense({ id, status: "REJECTED" })
+    } else {
+      const reason = window.prompt("Please enter reason for rejection")?.trim()
+      if (!reason) {
+        alert("Rejection reason is required")
+        setProcessingId(null)
+        return
+      }
+      result = await verifyExpense({ id, status: "REJECTED", adminRemark: reason })
+    }
+
     if (result?.error) {
       alert(result.error)
       setProcessingId(null)
       return
     }
-    void broadcastExpenseChange("admin-reject")
+    void broadcastExpenseChange(actorRole === "ADMIN" ? "admin-reject" : "member-rejected")
+    setCurrentPage(1)
     router.refresh()
     setProcessingId(null)
   }
@@ -452,6 +481,7 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
       return
     }
     void broadcastExpenseChange("admin-paid")
+    setCurrentPage(1)
     router.refresh()
     setProcessingId(null)
   }
@@ -600,12 +630,14 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <ExportExcelButton
-            data={exportData}
-            fileName="admin-expense-management"
-            sheetName="Expenses"
-            label="Export Excel"
-          />
+          {actorRole === "ADMIN" && (
+            <ExportExcelButton
+              data={exportData}
+              fileName="admin-expense-management"
+              sheetName="Expenses"
+              label="Export Excel"
+            />
+          )}
           <Button onClick={addDraftEntry}>Add Entry</Button>
         </div>
       </div>
@@ -690,7 +722,12 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
                         className="h-8 min-w-[180px]"
                       />
                     ) : (
-                      row.description
+                      <div className="space-y-1">
+                        <div>{row.description}</div>
+                        {row.expense?.adminRemark && row.expense.approvedByRole === "SUPERVISOR" && typeof row.expense.adminRemark === "string" ? (
+                          <div className="text-xs text-red-700">Supervisor reject reason: {row.expense.adminRemark.startsWith("SUPERVISOR_REJECT:") ? row.expense.adminRemark.replace("SUPERVISOR_REJECT:", "").trim() : row.expense.adminRemark}</div>
+                        ) : null}
+                      </div>
                     )}
                   </td>
                   <td className="px-4 py-3 text-gray-900">
@@ -722,7 +759,14 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
                         <option value="PENDING">Pending</option>
                       </select>
                     ) : row.expense ? (
-                      getDisplayStatus(row.expense.expenseStatus)
+                      <span className={`inline-block rounded px-2 py-1 text-xs font-medium ${
+                        getDisplayStatus(row.expense.expenseStatus) === "Paid" ? "bg-green-100 text-green-800" :
+                        getDisplayStatus(row.expense.expenseStatus) === "Payable" ? "bg-yellow-100 text-yellow-800" :
+                        getDisplayStatus(row.expense.expenseStatus) === "Rejected" ? "bg-red-100 text-red-800" :
+                        "bg-gray-100 text-gray-800"
+                      }`}>
+                        {getDisplayStatus(row.expense.expenseStatus)}
+                      </span>
                     ) : (
                       "Collection"
                     )}
@@ -751,7 +795,9 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
                         <option value="REJECTED">Rejected</option>
                       </select>
                     ) : row.expense ? (
-                      row.expense.approvalStatus
+                      row.expense.verifyStatus === "VERIFIED" && row.expense.approvalStatus === "PENDING"
+                        ? "VERIFIED"
+                        : row.expense.approvalStatus
                     ) : (
                       "-"
                     )}
@@ -761,35 +807,48 @@ export function AdminExpenseManagementTable({ totalReceivedAmount, afterCardsCon
                       <Button variant="outline" size="sm" onClick={() => removeDraftEntry(row.expense!.id)}>
                         Remove
                       </Button>
-                    ) : row.expense?.expenseStatus === "PENDING" ? (
+                    ) : row.expense?.expenseStatus === "PENDING" || (actorRole === "ADMIN" && row.expense?.expenseStatus === "REJECTED" && (row.expense?.approvedByRole === "SUPERVISOR" || row.expense?.approvedByRole === "VERIFIER")) ? (
                       <div className="flex flex-wrap gap-2">
                         <Button
                           size="sm"
                           onClick={() => void handleApprove(row.expense!.id)}
                           disabled={processingId === row.expense!.id}
                         >
-                          {processingId === row.expense!.id ? "Approving..." : "Approve"}
+                          {processingId === row.expense!.id ? (actorRole === "ADMIN" ? "Approving..." : "Verifying...") : (actorRole === "ADMIN" ? "Approve" : "Verify")}
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => void handleReject(row.expense!.id)}
-                          disabled={processingId === row.expense!.id}
-                        >
-                          {processingId === row.expense!.id ? "Rejecting..." : "Reject"}
-                        </Button>
+                        {(actorRole === "ADMIN" || actorRole === "SUPERVISOR" || actorRole === "VERIFIER") ? (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => void handleReject(row.expense!.id)}
+                            disabled={processingId === row.expense!.id}
+                          >
+                            {processingId === row.expense!.id ? "Rejecting..." : "Reject"}
+                          </Button>
+                        ) : null}
+                      </div>
+                    ) : row.expense?.expenseStatus === "REJECTED" ? (
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-red-700">Rejected</span>
+                        {row.expense.adminRemark ? (
+                          <span className="text-xs text-red-600">Reason: {row.expense.adminRemark}</span>
+                        ) : null}
                       </div>
                     ) : row.expense?.expenseStatus === "APPROVED" ? (
-                      <Button
-                        size="sm"
-                        variant="success"
-                        onClick={() => void handleMarkPaid(row.expense!.id)}
-                        disabled={processingId === row.expense!.id}
-                      >
-                        {processingId === row.expense!.id ? "Updating..." : "Pay"}
-                      </Button>
+                      (actorRole === "ADMIN" || actorRole === "VERIFIER") ? (
+                        <span className="text-sm font-medium text-amber-700">Waiting for inputter response</span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="success"
+                          onClick={() => void handleMarkPaid(row.expense!.id)}
+                          disabled={processingId === row.expense!.id}
+                        >
+                          {processingId === row.expense!.id ? "Updating..." : "Pay"}
+                        </Button>
+                      )
                     ) : row.expense?.expenseStatus === "PAID" ? (
-                      <span className="text-sm font-medium text-green-700">Paid</span>
+                      <span className="inline-block rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800">Paid</span>
                     ) : row.type === "COLLECTION" ? (
                       <span className="text-sm font-medium text-blue-700">Credit</span>
                     ) : (

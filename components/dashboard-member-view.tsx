@@ -25,7 +25,7 @@ interface Fund {
   createdAt: Date
 }
 
-type MemberDashboardStatus = "ALL" | "APPROVED" | "REJECTED" | "PENDING" | "COLLECTION"
+type MemberDashboardStatus = "ALL" | "APPROVED" | "REJECTED" | "PENDING" | "PAID" | "COLLECTION"
 
 interface MemberStats {
   total: number

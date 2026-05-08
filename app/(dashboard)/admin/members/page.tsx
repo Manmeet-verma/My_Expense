@@ -31,12 +31,13 @@ export default async function AdminMembersPage() {
     redirect("/login")
   }
 
-  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR") {
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR" && session.user.role !== "VERIFIER") {
     redirect("/dashboard")
   }
 
   const isAdmin = session.user.role === "ADMIN"
   const isSupervisor = session.user.role === "SUPERVISOR"
+  const isVerifier = session.user.role === "VERIFIER"
 
   let members: MemberRow[] = []
   try {
@@ -47,5 +48,5 @@ export default async function AdminMembersPage() {
     members = []
   }
 
-  return <MembersContent members={members} canManage={isAdmin || isSupervisor} canApproveExpenses={isSupervisor} />
+  return <MembersContent members={members} canManage={isAdmin || isSupervisor || isVerifier} canApproveExpenses={isSupervisor || isVerifier} />
 }

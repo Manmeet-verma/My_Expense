@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { deleteExpense } from "@/actions/expense"
+import { deleteExpense, markExpensePaid } from "@/actions/expense"
 import { broadcastExpenseChange } from "@/lib/supabase/realtime"
 import { EditExpenseModal } from "@/components/edit-expense-modal"
 import { DeleteExpenseConfirm } from "@/components/delete-expense-confirm"
 import { Edit, Trash2 } from "lucide-react"
 
 type ExpenseStatus = "PENDING" | "APPROVED" | "REJECTED" | "PAID"
-type DisplayStatus = "PENDING" | "APPROVED" | "REJECTED" | "VERIFIED" | "COLLECTION" | "ALL"
+type DisplayStatus = "PENDING" | "APPROVED" | "REJECTED" | "PAID" | "COLLECTION" | "ALL"
 
 interface MemberDashboardExpense {
   id: string
@@ -49,8 +49,8 @@ function formatCategory(category: string): string {
 }
 
 function getDisplayStatus(status: ExpenseStatus): Exclude<DisplayStatus, "ALL" | "COLLECTION"> {
-  if (status === "PAID") return "VERIFIED"
-  if (status === "APPROVED") return "VERIFIED"
+  if (status === "PAID") return "PAID"
+  if (status === "APPROVED") return "APPROVED"
   return status
 }
 
@@ -58,7 +58,7 @@ function getStatusBadgeVariant(
   status: Exclude<DisplayStatus, "ALL" | "COLLECTION">
 ): "warning" | "success" | "destructive" | "secondary" {
   if (status === "PENDING") return "warning"
-  if (status === "APPROVED") return "success"
+  if (status === "APPROVED" || status === "PAID") return "success"
   if (status === "REJECTED") return "destructive"
   return "secondary"
 }
@@ -69,12 +69,19 @@ function actionTakenBy(
   approvedByRole?: MemberDashboardExpense["approvedByRole"]
 ): string {
   if (status === "PENDING") return "Pending Review"
-  if (status === "APPROVED") {
+
+  // Treat PAID the same as APPROVED for action label purposes
+  if (status === "APPROVED" || status === "PAID") {
     if (approvedByRole === "SUPERVISOR" || approvedByRole === "VERIFIER") {
       return approvedByName || "Supervisor"
     }
+    // When admin approved, make it explicit for the inputter
+    if (approvedByRole === "ADMIN") {
+      return approvedByName ? `${approvedByName} (Approved by Admin)` : "Admin (Approved)"
+    }
     return approvedByName || "Admin"
   }
+
   if (status === "REJECTED") return approvedByName || "Supervisor"
   return approvedByName || "Supervisor"
 }
@@ -102,6 +109,7 @@ export function MemberDashboardStatusTable({
   const [editingExpense, setEditingExpense] = useState<MemberDashboardExpense | null>(null)
   const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [payingExpenseId, setPayingExpenseId] = useState<string | null>(null)
 
   useEffect(() => {
     if (externalActiveStatus !== undefined && externalActiveStatus !== activeStatus) {
@@ -110,6 +118,20 @@ export function MemberDashboardStatusTable({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalActiveStatus])
+
+  async function handleMarkPaid(id: string) {
+    if (payingExpenseId) return
+    setPayingExpenseId(id)
+    const result = await markExpensePaid({ id })
+    if (result?.error) {
+      alert(result.error)
+      setPayingExpenseId(null)
+      return
+    }
+    void broadcastExpenseChange("member-paid")
+    setPayingExpenseId(null)
+    router.refresh()
+  }
 
   const rows = useMemo(
     () =>
@@ -131,8 +153,9 @@ export function MemberDashboardStatusTable({
     if (activeStatus === "APPROVED") {
       return rows.filter(
         (row) =>
-          row.status === "VERIFIED" &&
-          (row.approvedByRole === "SUPERVISOR" || row.approvedByRole === "VERIFIER") &&
+          row.status === "APPROVED" &&
+          // include supervisor/verifier *and* admin approvals so inputter sees admin-approved items
+          (row.approvedByRole === "SUPERVISOR" || row.approvedByRole === "VERIFIER" || row.approvedByRole === "ADMIN") &&
           (selectedSupervisor === "ALL" || row.approvedByName === selectedSupervisor)
       )
     }
@@ -159,11 +182,11 @@ export function MemberDashboardStatusTable({
         ? "No collections found"
         : "No expenses found for selected status"
 
-  const statusButtons: DisplayStatus[] = ["ALL", "PENDING", "REJECTED", "VERIFIED", "APPROVED", "COLLECTION"]
+  const statusButtons: DisplayStatus[] = ["ALL", "PENDING", "REJECTED", "APPROVED", "PAID", "COLLECTION"]
 
   function getStatusButtonLabel(status: DisplayStatus): string {
     if (status === "COLLECTION") return "RECEIVED FUND"
-    if (status === "APPROVED") return "VERIFIED BY SUPERVISOR"
+    if (status === "APPROVED") return "APPROVED"
     return status
   }
 
@@ -240,7 +263,7 @@ export function MemberDashboardStatusTable({
                   <th className="px-4 py-3 font-semibold">Expenses Head</th>
                   <th className="px-4 py-3 font-semibold">Main Head</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Verified By Supervisor (Name)</th>
+                  <th className="px-4 py-3 font-semibold">Approved By (Name)</th>
                   <th className="px-4 py-3 font-semibold">Action of Inputter</th>
                   <th className="px-4 py-3 font-semibold">Actions</th>
                 </>
@@ -308,6 +331,21 @@ export function MemberDashboardStatusTable({
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
+                    )}
+                    {(row.status === "APPROVED" || row.status === "PAID") && (
+                      row.status === "PAID" ? (
+                        <span className="inline-block rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800">Paid</span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="success"
+                          onClick={() => void handleMarkPaid(row.id)}
+                          disabled={payingExpenseId === row.id}
+                          title="Mark expense as paid"
+                        >
+                          {payingExpenseId === row.id ? "Marking..." : "Pay"}
+                        </Button>
+                      )
                     )}
                   </td>
                 </tr>

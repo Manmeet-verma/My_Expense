@@ -617,12 +617,12 @@ export async function verifyMemberPassword(
 export async function getMembers() {
   const session = await auth()
 
-  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR" && session.user.role !== "VERIFIER")) {
     return []
   }
 
   const whereClause =
-    session.user.role === "SUPERVISOR"
+    session.user.role === "SUPERVISOR" || session.user.role === "VERIFIER"
       ? { role: "MEMBER" as const, assignedVerifierId: session.user.id }
       : { role: "MEMBER" as const }
 

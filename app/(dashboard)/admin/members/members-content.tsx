@@ -209,7 +209,7 @@ export default function MembersContent({
     }
 
     setApproving(true)
-    const result = await verifyExpense({ id })
+    const result = await verifyExpense({ id, status: "APPROVED" })
     if (result?.error) {
       alert(result.error)
       setApproving(false)
@@ -235,7 +235,7 @@ export default function MembersContent({
     setApproving(true)
 
     for (const expenseId of selectedPendingIds) {
-      const result = await verifyExpense({ id: expenseId })
+      const result = await verifyExpense({ id: expenseId, status: "APPROVED" })
       if (result?.error) {
         alert(result.error)
         setApproving(false)

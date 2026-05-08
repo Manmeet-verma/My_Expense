@@ -9,7 +9,13 @@ interface Member {
   email: string
 }
 
-export function SupervisorInputterFilter({ members }: { members: Member[] }) {
+export function SupervisorInputterFilter({
+  members,
+  actorRole = "SUPERVISOR",
+}: {
+  members: Member[]
+  actorRole?: "SUPERVISOR" | "VERIFIER"
+}) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [expenses, setExpenses] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -36,11 +42,16 @@ export function SupervisorInputterFilter({ members }: { members: Member[] }) {
           id: e.id,
           title: e.title,
           description: e.description,
+          adminRemark: e.adminRemark ?? null,
           createdAt: e.createdAt,
           amount: e.amount,
           category: e.category,
           status: e.status,
-          createdBy: { name: null, email: '' },
+          createdBy: e.createdBy ? {
+            name: e.createdBy.name,
+            email: e.createdBy.email,
+            assignedProject: e.createdBy.assignedProject,
+          } : { name: null, email: '', assignedProject: null },
           approvedBy: e.approvedBy || null,
         }))
         setExpenses(normalized)
@@ -77,6 +88,7 @@ export function SupervisorInputterFilter({ members }: { members: Member[] }) {
 
       {selectedId && !loading && (
         <AdminExpenseManagementTable
+          actorRole={actorRole}
           expenses={expenses}
           totalReceivedAmount={0}
           collectionFunds={[]}

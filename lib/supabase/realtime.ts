@@ -52,7 +52,21 @@ export function subscribeToExpenseChanges(onChange: () => void) {
 
 export async function broadcastExpenseChange(source: string) {
   const supabase = getSupabaseBrowserClient()
-  if (!supabase) return
+  if (!supabase) {
+    // Fallback for local development without Supabase realtime: use localStorage
+    try {
+      const payload = JSON.stringify({ source, at: Date.now() })
+      // write then remove to ensure storage event fires in other tabs
+      localStorage.setItem("expense-updates", payload)
+      // small timeout to allow storage event listeners to trigger
+      window.setTimeout(() => {
+        localStorage.removeItem("expense-updates")
+      }, 50)
+    } catch (e) {
+      // ignore storage errors
+    }
+    return
+  }
 
   const channel = supabase.channel(CHANNEL_NAME, {
     config: { broadcast: { self: true } },

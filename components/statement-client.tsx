@@ -221,7 +221,6 @@ export function StatementClient({ userId }: { userId: string }) {
     collection: "text-purple-600",
   }
 
-  const allExpenses = [...approvedExpenses, ...rejectedExpenses, ...pendingExpenses]
   const deleteConfirmExpense = allExpenses.find((e) => e.id === deletingExpenseId)
 
   async function handleDelete() {
